@@ -54,9 +54,36 @@ class ApiClient {
         throw new Error(errorMessage);
       }
 
-      const data = await response.json();
-      console.log('[API] Response:', endpoint, data);
-      return data;
+      // Handle empty responses (204 No Content, etc.)
+      const contentLength = response.headers.get('content-length');
+      
+      // If no content (204) or content-length is 0, return empty result
+      if (response.status === 204 || contentLength === '0') {
+        return undefined as T;
+      }
+
+      // Read response as text first to check if it's empty
+      const text = await response.text();
+      
+      // If response is empty, return undefined
+      if (!text || text.trim() === '') {
+        return undefined as T;
+      }
+
+      // Try to parse JSON
+      try {
+        const data = JSON.parse(text);
+        console.log('[API] Response:', endpoint, data);
+        return data;
+      } catch (parseError) {
+        // If JSON parsing fails but status is OK (200-299), return empty
+        // This handles cases where server returns empty body with 200 status
+        if (response.status >= 200 && response.status < 300) {
+          return undefined as T;
+        }
+        // For other status codes, throw the parse error
+        throw new Error(`Failed to parse JSON response: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
+      }
     } catch (error) {
       console.error('[API] Error:', endpoint, error);
       if (error instanceof Error) {
@@ -77,21 +104,21 @@ class ApiClient {
   }
 
   async createCustomer(customer: CustomerCreate): Promise<Customer> {
-    return this.request<Customer>('/api/customers', {
+    return this.request<Customer>('/api/customers/', {
       method: 'POST',
       body: JSON.stringify(customer),
     });
   }
 
   async updateCustomer(id: number, customer: CustomerUpdate): Promise<Customer> {
-    return this.request<Customer>(`/api/customers/${id}`, {
+    return this.request<Customer>(`/api/customers/${id}/`, {
       method: 'PUT',
       body: JSON.stringify(customer),
     });
   }
 
   async deleteCustomer(id: number): Promise<void> {
-    return this.request<void>(`/api/customers/${id}`, {
+    return this.request<void>(`/api/customers/${id}/`, {
       method: 'DELETE',
     });
   }
@@ -110,7 +137,7 @@ class ApiClient {
   }
 
   async createMeasurementTemplate(template: MeasurementTemplateCreate): Promise<MeasurementTemplate> {
-    return this.request<MeasurementTemplate>('/api/measurement-templates', {
+    return this.request<MeasurementTemplate>('/api/measurement-templates/', {
       method: 'POST',
       body: JSON.stringify(template),
     });
@@ -120,14 +147,14 @@ class ApiClient {
     id: number,
     template: MeasurementTemplateUpdate
   ): Promise<MeasurementTemplate> {
-    return this.request<MeasurementTemplate>(`/api/measurement-templates/${id}`, {
+    return this.request<MeasurementTemplate>(`/api/measurement-templates/${id}/`, {
       method: 'PUT',
       body: JSON.stringify(template),
     });
   }
 
   async deleteMeasurementTemplate(id: number): Promise<void> {
-    return this.request<void>(`/api/measurement-templates/${id}`, {
+    return this.request<void>(`/api/measurement-templates/${id}/`, {
       method: 'DELETE',
     });
   }
@@ -146,21 +173,21 @@ class ApiClient {
   }
 
   async createMeasurement(measurement: MeasurementCreate): Promise<Measurement> {
-    return this.request<Measurement>('/api/measurements', {
+    return this.request<Measurement>('/api/measurements/', {
       method: 'POST',
       body: JSON.stringify(measurement),
     });
   }
 
   async updateMeasurement(id: number, measurementsJson: Record<string, number>): Promise<Measurement> {
-    return this.request<Measurement>(`/api/measurements/${id}`, {
+    return this.request<Measurement>(`/api/measurements/${id}/`, {
       method: 'PUT',
       body: JSON.stringify(measurementsJson),
     });
   }
 
   async deleteMeasurement(id: number): Promise<void> {
-    return this.request<void>(`/api/measurements/${id}`, {
+    return this.request<void>(`/api/measurements/${id}/`, {
       method: 'DELETE',
     });
   }
@@ -179,21 +206,21 @@ class ApiClient {
   }
 
   async createOrder(order: OrderCreate): Promise<Order> {
-    return this.request<Order>('/api/orders', {
+    return this.request<Order>('/api/orders/', {
       method: 'POST',
       body: JSON.stringify(order),
     });
   }
 
   async updateOrder(id: number, order: OrderUpdate): Promise<Order> {
-    return this.request<Order>(`/api/orders/${id}`, {
+    return this.request<Order>(`/api/orders/${id}/`, {
       method: 'PUT',
       body: JSON.stringify(order),
     });
   }
 
   async deleteOrder(id: number): Promise<void> {
-    return this.request<void>(`/api/orders/${id}`, {
+    return this.request<void>(`/api/orders/${id}/`, {
       method: 'DELETE',
     });
   }
@@ -209,14 +236,14 @@ class ApiClient {
   }
 
   async createPayment(payment: PaymentCreate): Promise<Payment> {
-    return this.request<Payment>('/api/payments', {
+    return this.request<Payment>('/api/payments/', {
       method: 'POST',
       body: JSON.stringify(payment),
     });
   }
 
   async deletePayment(id: number): Promise<void> {
-    return this.request<void>(`/api/payments/${id}`, {
+    return this.request<void>(`/api/payments/${id}/`, {
       method: 'DELETE',
     });
   }
@@ -242,21 +269,21 @@ class ApiClient {
   }
 
   async createSample(sample: SampleCreate): Promise<Sample> {
-    return this.request<Sample>('/api/samples', {
+    return this.request<Sample>('/api/samples/', {
       method: 'POST',
       body: JSON.stringify(sample),
     });
   }
 
   async updateSample(id: number, sample: SampleUpdate): Promise<Sample> {
-    return this.request<Sample>(`/api/samples/${id}`, {
+    return this.request<Sample>(`/api/samples/${id}/`, {
       method: 'PUT',
       body: JSON.stringify(sample),
     });
   }
 
   async deleteSample(id: number): Promise<void> {
-    return this.request<void>(`/api/samples/${id}`, {
+    return this.request<void>(`/api/samples/${id}/`, {
       method: 'DELETE',
     });
   }
@@ -272,39 +299,39 @@ class ApiClient {
   }
 
   async createStaff(staff: StaffCreate): Promise<Staff> {
-    return this.request<Staff>('/api/staff', {
+    return this.request<Staff>('/api/staff/', {
       method: 'POST',
       body: JSON.stringify(staff),
     });
   }
 
   async updateStaff(id: number, staff: StaffUpdate): Promise<Staff> {
-    return this.request<Staff>(`/api/staff/${id}`, {
+    return this.request<Staff>(`/api/staff/${id}/`, {
       method: 'PUT',
       body: JSON.stringify(staff),
     });
   }
 
   async deleteStaff(id: number): Promise<void> {
-    return this.request<void>(`/api/staff/${id}`, {
+    return this.request<void>(`/api/staff/${id}/`, {
       method: 'DELETE',
     });
   }
 
   // Order-Staff Assignment endpoints
   async getOrderStaff(orderId: number): Promise<OrderStaffAssignment[]> {
-    return this.request<OrderStaffAssignment[]>(`/api/orders/${orderId}/staff`);
+    return this.request<OrderStaffAssignment[]>(`/api/orders/${orderId}/staff/`);
   }
 
   async assignStaffToOrder(orderId: number, assignment: OrderStaffAssignmentCreate): Promise<OrderStaffAssignment> {
-    return this.request<OrderStaffAssignment>(`/api/orders/${orderId}/staff`, {
+    return this.request<OrderStaffAssignment>(`/api/orders/${orderId}/staff/`, {
       method: 'POST',
       body: JSON.stringify(assignment),
     });
   }
 
   async removeStaffFromOrder(orderId: number, assignmentId: number): Promise<void> {
-    return this.request<void>(`/api/orders/${orderId}/staff/${assignmentId}`, {
+    return this.request<void>(`/api/orders/${orderId}/staff/${assignmentId}/`, {
       method: 'DELETE',
     });
   }

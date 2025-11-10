@@ -55,6 +55,7 @@ export default function Orders() {
   };
 
   const handleDelete = (id: number) => {
+    console.log('Delete button clicked for order:', id);
     setDeleteConfirm({ show: true, id });
   };
 
@@ -62,10 +63,18 @@ export default function Orders() {
     if (deleteConfirm.id) {
       try {
         await deleteOrder(deleteConfirm.id);
+        // Refresh orders list after deletion
+        const customerId = selectedCustomerId ? Number(selectedCustomerId) : undefined;
+        await fetchOrders(customerId, selectedStatus || undefined);
         showToast('Order deleted successfully', 'success');
         setDeleteConfirm({ show: false, id: null });
+        // Close order detail if it was open
+        if (selectedOrder?.id === deleteConfirm.id) {
+          setSelectedOrder(null);
+        }
       } catch (error) {
-        showToast('Failed to delete order', 'error');
+        console.error('Delete error:', error);
+        showToast(error instanceof Error ? error.message : 'Failed to delete order', 'error');
         setDeleteConfirm({ show: false, id: null });
       }
     }
@@ -212,15 +221,19 @@ export default function Orders() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                           {new Date(order.delivery_date).toLocaleDateString()}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <td 
+                          className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleEdit(order.id);
                               }}
-                              className="text-blue-600 hover:text-blue-700 transition-all p-2 hover:bg-blue-50 rounded-lg"
+                              className="text-blue-600 hover:text-blue-700 transition-all p-2 hover:bg-blue-50 rounded-lg relative z-10 pointer-events-auto"
                               title="Edit order"
+                              type="button"
                             >
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -231,8 +244,9 @@ export default function Orders() {
                                 e.stopPropagation();
                                 handleDelete(order.id);
                               }}
-                              className="text-red-600 hover:text-red-700 transition-all p-2 hover:bg-red-50 rounded-lg"
+                              className="text-red-600 hover:text-red-700 transition-all p-2 hover:bg-red-50 rounded-lg relative z-10 pointer-events-auto"
                               title="Delete order"
+                              type="button"
                             >
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -267,6 +281,19 @@ export default function Orders() {
               setSelectedOrder(null);
               handleEdit(selectedOrder.id);
             }}
+          />
+        )}
+
+        {/* Delete Confirmation Dialog */}
+        {deleteConfirm.show && (
+          <ConfirmDialog
+            title="Delete Order"
+            message={`Are you sure you want to delete order #${deleteConfirm.id}? This action cannot be undone.`}
+            confirmText="Delete"
+            cancelText="Cancel"
+            onConfirm={confirmDelete}
+            onCancel={() => setDeleteConfirm({ show: false, id: null })}
+            type="danger"
           />
         )}
       </div>
