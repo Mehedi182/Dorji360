@@ -3,6 +3,7 @@ import { useStaffStore } from '../store/staffStore';
 import { useToastStore } from '../store/toastStore';
 import StaffForm from '../components/StaffForm';
 import ConfirmDialog from '../components/ConfirmDialog';
+import { formatDate } from '../lib/utils';
 
 const ROLE_OPTIONS = [
   { value: 'master_tailor', label: 'Master Tailor' },
@@ -35,6 +36,7 @@ export default function Staff() {
   const [showForm, setShowForm] = useState(false);
   const [editingStaff, setEditingStaff] = useState<number | null>(null);
   const [filterRole, setFilterRole] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState<string>('');
   const [deleteConfirm, setDeleteConfirm] = useState<{ show: boolean; id: number | null }>({ show: false, id: null });
 
   useEffect(() => {
@@ -72,6 +74,24 @@ export default function Staff() {
     }
   };
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Search is handled by filtering the displayed staff
+  };
+
+  const filteredStaff = staff.filter((staffMember) => {
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        staffMember.id.toString().includes(searchLower) ||
+        staffMember.name.toLowerCase().includes(searchLower) ||
+        staffMember.phone.toLowerCase().includes(searchLower) ||
+        getRoleLabel(staffMember.role).toLowerCase().includes(searchLower)
+      );
+    }
+    return true;
+  });
+
   return (
     <div className="w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
@@ -92,21 +112,54 @@ export default function Staff() {
             </button>
           </div>
 
-          {/* Filters Bar */}
-          <div className="mb-6">
-            <select
-              value={filterRole}
-              onChange={(e) => setFilterRole(e.target.value)}
-              className="input-modern w-full min-h-[44px]"
-            >
-              <option value="">All Roles</option>
-              {ROLE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Search/Filter Bar */}
+          <form onSubmit={handleSearch} className="mb-6">
+            <div className="flex gap-3 mb-3">
+              <div className="relative flex-[0.7]">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+                  <svg className="h-5 w-5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search by ID, name, phone, or role..."
+                  className="w-full px-4 py-2.5 pl-12 min-h-[44px] border border-border rounded-lg bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm hover:border-primary/50 transition-all duration-200 text-text-primary"
+                />
+              </div>
+              <button
+                type="submit"
+                className="btn-primary min-h-[44px] px-6"
+              >
+                Search
+              </button>
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm('')}
+                  className="px-4 py-2.5 min-h-[44px] bg-gray-100 text-text-secondary rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <select
+                value={filterRole}
+                onChange={(e) => setFilterRole(e.target.value)}
+                className="input-modern flex-1 min-h-[44px]"
+              >
+                <option value="">All Roles</option>
+                {ROLE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </form>
 
           {/* Error Message */}
           {error && (
@@ -126,7 +179,7 @@ export default function Staff() {
           {/* Staff List */}
           {!loading && (
             <div className="overflow-hidden">
-            {staff.length === 0 ? (
+            {filteredStaff.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-gray-500 text-lg">No staff members found</p>
                 <button
@@ -140,7 +193,7 @@ export default function Staff() {
               <>
                 {/* Mobile Card View */}
                 <div className="lg:hidden space-y-4 p-4">
-                  {staff.map((staffMember) => (
+                  {filteredStaff.map((staffMember) => (
                     <div
                       key={staffMember.id}
                       className="glass rounded-xl p-4 shadow-md border border-white/20"
@@ -174,8 +227,8 @@ export default function Staff() {
                           </button>
                         </div>
                       </div>
-                      <p className="text-xs text-gray-500">
-                        Joined: {new Date(staffMember.join_date).toLocaleDateString()}
+                      <p className="text-xs text-text-secondary">
+                        Joined: {formatDate(staffMember.join_date)}
                       </p>
                     </div>
                   ))}
@@ -184,18 +237,18 @@ export default function Staff() {
                 {/* Desktop Table View */}
                 <div className="hidden lg:block overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200/50">
-                    <thead className="bg-gradient-to-r from-gray-50 to-gray-100/50">
+                    <thead className="bg-gray-100 border-b-2 border-border">
                       <tr>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase">ID</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase">Name</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase">Phone</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase">Role</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase">Join Date</th>
-                        <th className="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase">Actions</th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-text-primary uppercase">ID</th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-text-primary uppercase">Name</th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-text-primary uppercase">Phone</th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-text-primary uppercase">Role</th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-text-primary uppercase">Join Date</th>
+                        <th className="px-6 py-4 text-right text-xs font-bold text-text-primary uppercase">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white/50 divide-y divide-gray-200/30">
-                      {staff.map((staffMember) => (
+                      {filteredStaff.map((staffMember) => (
                         <tr
                           key={staffMember.id}
                           className="hover:bg-blue-50/50 transition-all duration-150 group"
@@ -214,8 +267,8 @@ export default function Staff() {
                               {getRoleLabel(staffMember.role)}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                            {new Date(staffMember.join_date).toLocaleDateString()}
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary">
+                            {formatDate(staffMember.join_date)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <div className="flex items-center justify-end gap-2">
@@ -246,8 +299,8 @@ export default function Staff() {
                 </div>
               </>
             )}
-          </div>
-        )}
+            </div>
+          )}
 
           {/* Delete Confirmation Dialog */}
           {deleteConfirm.show && (

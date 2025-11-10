@@ -7,6 +7,7 @@ export interface Customer {
   id: number;
   name: string;
   phone: string;
+  gender: 'male' | 'female' | 'unisex';
   address?: string;
   notes?: string;
   created_at: string;
@@ -15,6 +16,7 @@ export interface Customer {
 export interface CustomerCreate {
   name: string;
   phone: string;
+  gender?: 'male' | 'female' | 'unisex';
   address?: string;
   notes?: string;
 }
@@ -22,6 +24,7 @@ export interface CustomerCreate {
 export interface CustomerUpdate {
   name?: string;
   phone?: string;
+  gender?: 'male' | 'female' | 'unisex';
   address?: string;
   notes?: string;
 }

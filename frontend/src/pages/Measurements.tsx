@@ -5,6 +5,7 @@ import { useToastStore } from '../store/toastStore';
 import MeasurementForm from '../components/MeasurementForm';
 import MeasurementDetail from '../components/MeasurementDetail';
 import ConfirmDialog from '../components/ConfirmDialog';
+import { formatDate } from '../lib/utils';
 import type { MeasurementWithCustomer } from '../lib/api';
 
 export default function Measurements() {
@@ -21,8 +22,7 @@ export default function Measurements() {
   const { customers, fetchCustomers } = useCustomerStore();
   const { showToast } = useToastStore();
 
-  const [selectedCustomerId, setSelectedCustomerId] = useState<number | ''>('');
-  const [selectedGarmentType, setSelectedGarmentType] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState<string>('');
   const [showForm, setShowForm] = useState(false);
   const [editingMeasurement, setEditingMeasurement] = useState<number | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ show: boolean; id: number | null }>({ show: false, id: null });
@@ -32,11 +32,6 @@ export default function Measurements() {
     fetchCustomers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    const customerId = selectedCustomerId ? Number(selectedCustomerId) : undefined;
-    fetchMeasurements(customerId, selectedGarmentType || undefined);
-  }, [selectedCustomerId, selectedGarmentType, fetchMeasurements]);
 
   const handleEdit = async (id: number) => {
     // Close details modal if open
@@ -50,8 +45,7 @@ export default function Measurements() {
   const handleFormClose = () => {
     setShowForm(false);
     setEditingMeasurement(null);
-    const customerId = selectedCustomerId ? Number(selectedCustomerId) : undefined;
-    fetchMeasurements(customerId, selectedGarmentType || undefined);
+    fetchMeasurements();
   };
 
   const handleDelete = (id: number) => {
@@ -71,7 +65,25 @@ export default function Measurements() {
     }
   };
 
-  const garmentTypes = Array.from(new Set(measurements.map((m) => m.garment_type)));
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Search is handled by filtering the displayed measurements
+  };
+
+  const filteredMeasurements = measurements.filter((measurement) => {
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        measurement.id.toString().includes(searchLower) ||
+        measurement.customer_name.toLowerCase().includes(searchLower) ||
+        measurement.customer_phone.toLowerCase().includes(searchLower) ||
+        measurement.garment_type.toLowerCase().includes(searchLower) ||
+        measurement.template_name.toLowerCase().includes(searchLower)
+      );
+    }
+    return true;
+  });
+
 
   return (
     <div className="w-full">
@@ -93,33 +105,40 @@ export default function Measurements() {
             </button>
           </div>
 
-          {/* Filters Bar */}
-          <div className="mb-6 flex flex-col sm:flex-row gap-3">
-            <select
-              value={selectedCustomerId}
-              onChange={(e) => setSelectedCustomerId(e.target.value ? Number(e.target.value) : '')}
-              className="input-modern flex-1 min-h-[44px]"
-            >
-              <option value="">All Customers</option>
-              {customers.map((customer) => (
-                <option key={customer.id} value={customer.id}>
-                  {customer.name}
-                </option>
-              ))}
-            </select>
-            <select
-              value={selectedGarmentType}
-              onChange={(e) => setSelectedGarmentType(e.target.value)}
-              className="input-modern flex-1 min-h-[44px]"
-            >
-              <option value="">All Garment Types</option>
-              {garmentTypes.map((type) => (
-                <option key={type} value={type}>
-                  {type.charAt(0).toUpperCase() + type.slice(1)}
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Search/Filter Bar */}
+          <form onSubmit={handleSearch} className="mb-6">
+            <div className="flex gap-3 mb-3">
+              <div className="relative flex-[0.7]">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+                  <svg className="h-5 w-5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search by ID, customer name, phone, garment type, or template..."
+                  className="w-full px-4 py-2.5 pl-12 min-h-[44px] border border-border rounded-lg bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm hover:border-primary/50 transition-all duration-200 text-text-primary"
+                />
+              </div>
+              <button
+                type="submit"
+                className="btn-primary min-h-[44px] px-6"
+              >
+                Search
+              </button>
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm('')}
+                  className="px-4 py-2.5 min-h-[44px] bg-gray-100 text-text-secondary rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          </form>
 
           {/* Error Message */}
           {error && (
@@ -153,7 +172,7 @@ export default function Measurements() {
               <>
                 {/* Mobile Card View */}
                 <div className="lg:hidden space-y-4 p-4">
-                  {measurements.map((measurement) => (
+                  {filteredMeasurements.map((measurement) => (
                     <div
                       key={measurement.id}
                       onClick={() => setSelectedMeasurement(measurement)}
@@ -202,8 +221,8 @@ export default function Measurements() {
                           <p className="text-sm font-medium">{measurement.template_name}</p>
                         </div>
                       </div>
-                      <p className="text-xs text-gray-500 mt-3">
-                        Created: {new Date(measurement.created_at).toLocaleDateString()}
+                      <p className="text-xs text-text-secondary mt-3">
+                        Created: {formatDate(measurement.created_at)}
                       </p>
                     </div>
                   ))}
@@ -212,30 +231,30 @@ export default function Measurements() {
                 {/* Desktop Table View */}
                 <div className="hidden lg:block overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                    <thead className="bg-gray-100 border-b-2 border-border">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-bold text-text-primary uppercase tracking-wider">
                           ID
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-bold text-text-primary uppercase tracking-wider">
                           Customer
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-bold text-text-primary uppercase tracking-wider">
                           Garment Type
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-bold text-text-primary uppercase tracking-wider">
                           Template
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs font-bold text-text-primary uppercase tracking-wider">
                           Created
                         </th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-right text-xs font-bold text-text-primary uppercase tracking-wider">
                           Actions
                         </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {measurements.map((measurement) => (
+                      {filteredMeasurements.map((measurement) => (
                         <tr
                           key={measurement.id}
                           className="hover:bg-gray-50 cursor-pointer"
@@ -256,8 +275,8 @@ export default function Measurements() {
                           <td className="px-6 py-4 text-sm text-gray-500">
                             {measurement.template_name}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {new Date(measurement.created_at).toLocaleDateString()}
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary">
+                            {formatDate(measurement.created_at)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <div className="flex items-center justify-end gap-2">
@@ -315,7 +334,7 @@ export default function Measurements() {
         {showForm && (
           <MeasurementForm
             measurementId={editingMeasurement}
-            customerId={selectedCustomerId ? Number(selectedCustomerId) : undefined}
+            customerId={undefined}
             onClose={handleFormClose}
           />
         )}

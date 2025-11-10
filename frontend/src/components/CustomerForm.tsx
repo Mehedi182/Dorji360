@@ -12,6 +12,7 @@ export default function CustomerForm({ customerId, onClose }: CustomerFormProps)
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
+    gender: 'unisex' as 'male' | 'female' | 'unisex',
     address: '',
     notes: '',
   });
@@ -22,6 +23,7 @@ export default function CustomerForm({ customerId, onClose }: CustomerFormProps)
       setFormData({
         name: selectedCustomer.name,
         phone: selectedCustomer.phone,
+        gender: selectedCustomer.gender || 'unisex',
         address: selectedCustomer.address || '',
         notes: selectedCustomer.notes || '',
       });
@@ -35,6 +37,7 @@ export default function CustomerForm({ customerId, onClose }: CustomerFormProps)
       setFormData({
         name: selectedCustomer.name,
         phone: selectedCustomer.phone,
+        gender: selectedCustomer.gender || 'unisex',
         address: selectedCustomer.address || '',
         notes: selectedCustomer.notes || '',
       });
@@ -120,6 +123,47 @@ export default function CustomerForm({ customerId, onClose }: CustomerFormProps)
                 placeholder="Phone number"
               />
               {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Gender *
+              </label>
+              <div className="flex gap-4">
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="radio"
+                    name="gender"
+                    value="male"
+                    checked={formData.gender === 'male'}
+                    onChange={(e) => setFormData({ ...formData, gender: e.target.value as 'male' | 'female' | 'unisex' })}
+                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-2 focus:ring-blue-500"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">Male</span>
+                </label>
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="radio"
+                    name="gender"
+                    value="female"
+                    checked={formData.gender === 'female'}
+                    onChange={(e) => setFormData({ ...formData, gender: e.target.value as 'male' | 'female' | 'unisex' })}
+                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-2 focus:ring-blue-500"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">Female</span>
+                </label>
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="radio"
+                    name="gender"
+                    value="unisex"
+                    checked={formData.gender === 'unisex'}
+                    onChange={(e) => setFormData({ ...formData, gender: e.target.value as 'male' | 'female' | 'unisex' })}
+                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-2 focus:ring-blue-500"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">Unisex</span>
+                </label>
+              </div>
             </div>
 
             <div>

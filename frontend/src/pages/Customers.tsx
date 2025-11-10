@@ -4,6 +4,7 @@ import { useToastStore } from '../store/toastStore';
 import CustomerForm from '../components/CustomerForm';
 import CustomerDetail from '../components/CustomerDetail';
 import ConfirmDialog from '../components/ConfirmDialog';
+import { formatDate } from '../lib/utils';
 
 // Helper function to get initials from name
 const getInitials = (name: string): string => {
@@ -46,8 +47,21 @@ export default function Customers() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    fetchCustomers(searchTerm || undefined);
+    // Search is handled by filtering the displayed customers
   };
+
+  const filteredCustomers = customers.filter((customer) => {
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        customer.id.toString().includes(searchLower) ||
+        customer.name.toLowerCase().includes(searchLower) ||
+        customer.phone.toLowerCase().includes(searchLower) ||
+        customer.address?.toLowerCase().includes(searchLower)
+      );
+    }
+    return true;
+  });
 
   const handleEdit = async (id: number) => {
     // Fetch customer data first, then open form
@@ -69,7 +83,7 @@ export default function Customers() {
     if (deleteConfirm.id) {
       try {
         await deleteCustomer(deleteConfirm.id);
-        fetchCustomers(searchTerm || undefined);
+        fetchCustomers();
         showToast('Customer deleted successfully', 'success');
         setDeleteConfirm({ show: false, id: null });
       } catch (error) {
@@ -82,7 +96,7 @@ export default function Customers() {
   const handleFormClose = () => {
     setShowForm(false);
     setEditingCustomer(null);
-    fetchCustomers(searchTerm || undefined);
+    fetchCustomers();
   };
 
   return (
@@ -109,7 +123,7 @@ export default function Customers() {
           <form onSubmit={handleSearch} className="mb-6">
             <div className="flex gap-3">
               <div className="relative flex-[0.7]">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                   <svg className="h-5 w-5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
@@ -119,7 +133,7 @@ export default function Customers() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search by name, phone, or ID..."
-                  className="input-modern w-full pl-10 min-h-[44px]"
+                  className="w-full px-4 py-2.5 pl-12 min-h-[44px] border border-border rounded-lg bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm hover:border-primary/50 transition-all duration-200 text-text-primary"
                 />
               </div>
               <button
@@ -131,10 +145,7 @@ export default function Customers() {
               {searchTerm && (
                 <button
                   type="button"
-                  onClick={() => {
-                    setSearchTerm('');
-                    fetchCustomers();
-                  }}
+                  onClick={() => setSearchTerm('')}
                   className="px-4 py-2.5 min-h-[44px] bg-gray-100 text-text-secondary rounded-lg hover:bg-gray-200 transition-colors"
                 >
                   Clear
@@ -161,7 +172,7 @@ export default function Customers() {
           {/* Data Table */}
           {!loading && (
             <div className="overflow-hidden">
-              {customers.length === 0 ? (
+              {filteredCustomers.length === 0 ? (
                 <div className="text-center py-12">
                   <p className="text-text-secondary text-lg">No customers found</p>
                   <button
@@ -175,7 +186,7 @@ export default function Customers() {
                 <>
                   {/* Mobile Card View */}
                   <div className="lg:hidden space-y-4">
-                    {customers.map((customer) => (
+                    {filteredCustomers.map((customer) => (
                       <div
                         key={customer.id}
                         className="bg-white rounded-lg p-4 shadow-sm border border-border"
@@ -188,6 +199,9 @@ export default function Customers() {
                             <div className="flex-1 min-w-0">
                               <h3 className="font-bold text-lg text-text-primary truncate">#{customer.id} - {customer.name}</h3>
                               <p className="text-sm text-text-secondary mt-1">{customer.phone}</p>
+                              <span className="inline-block mt-2 px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                                {customer.gender.charAt(0).toUpperCase() + customer.gender.slice(1)}
+                              </span>
                               {customer.address && (
                                 <p className="text-xs text-text-secondary mt-1 truncate">{customer.address}</p>
                               )}
@@ -225,9 +239,9 @@ export default function Customers() {
                             </button>
                           </div>
                         </div>
-                        <p className="text-xs text-text-secondary">
-                          Created: {new Date(customer.created_at).toLocaleDateString()}
-                        </p>
+                      <p className="text-xs text-text-secondary">
+                        Created: {formatDate(customer.created_at)}
+                      </p>
                       </div>
                     ))}
                   </div>
@@ -235,27 +249,30 @@ export default function Customers() {
                   {/* Desktop Table View */}
                   <div className="hidden lg:block overflow-x-auto">
                     <table className="min-w-full divide-y divide-border">
-                      <thead className="bg-gray-50">
+                      <thead className="bg-gray-100 border-b-2 border-border">
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-semibold text-text-primary uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-bold text-text-primary uppercase tracking-wider">
                             ID / Name
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-semibold text-text-primary uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-bold text-text-primary uppercase tracking-wider">
                             Phone
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-semibold text-text-primary uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-bold text-text-primary uppercase tracking-wider">
+                            Gender
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-bold text-text-primary uppercase tracking-wider">
                             Address
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-semibold text-text-primary uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-bold text-text-primary uppercase tracking-wider">
                             Created
                           </th>
-                          <th className="px-6 py-3 text-right text-xs font-semibold text-text-primary uppercase tracking-wider">
+                          <th className="px-6 py-3 text-right text-xs font-bold text-text-primary uppercase tracking-wider">
                             Actions
                           </th>
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-border">
-                        {customers.map((customer) => (
+                        {filteredCustomers.map((customer) => (
                           <tr
                             key={customer.id}
                             className="hover:bg-gray-50 transition-all duration-150 group"
@@ -284,11 +301,16 @@ export default function Customers() {
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary">
                               {customer.phone}
                             </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary">
+                              <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                                {customer.gender.charAt(0).toUpperCase() + customer.gender.slice(1)}
+                              </span>
+                            </td>
                             <td className="px-6 py-4 text-sm text-text-secondary">
                               {customer.address || '-'}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary">
-                              {new Date(customer.created_at).toLocaleDateString()}
+                              {formatDate(customer.created_at)}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                               <div className="flex items-center justify-end gap-2">

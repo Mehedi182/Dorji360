@@ -11,6 +11,7 @@ class MeasurementTemplateViewSet(viewsets.ModelViewSet):
     serializer_class = MeasurementTemplateSerializer
 
     def get_queryset(self):
+        from django.db.models import Q
         queryset = MeasurementTemplate.objects.all()
         garment_type = self.request.query_params.get('garment_type', None)
         gender = self.request.query_params.get('gender', None)
@@ -18,7 +19,8 @@ class MeasurementTemplateViewSet(viewsets.ModelViewSet):
         if garment_type:
             queryset = queryset.filter(garment_type=garment_type)
         if gender:
-            queryset = queryset.filter(gender=gender)
+            # Return templates matching the gender OR unisex templates
+            queryset = queryset.filter(Q(gender=gender) | Q(gender='unisex'))
         
         return queryset.order_by('-id')
 
@@ -40,7 +42,33 @@ class MeasurementViewSet(viewsets.ModelViewSet):
         return queryset.order_by('-id')
 
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+        # Handle customer_id and template_id from frontend
+        data = request.data.copy()
+        
+        # Convert customer_id to customer object
+        if 'customer_id' in data:
+            from customers.models import Customer
+            try:
+                customer = Customer.objects.get(id=data.pop('customer_id'))
+                data['customer'] = customer.id
+            except Customer.DoesNotExist:
+                return Response(
+                    {'customer_id': ['Invalid customer ID']},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
+        # Convert template_id to template object
+        if 'template_id' in data:
+            try:
+                template = MeasurementTemplate.objects.get(id=data.pop('template_id'))
+                data['template'] = template.id
+            except MeasurementTemplate.DoesNotExist:
+                return Response(
+                    {'template_id': ['Invalid template ID']},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
+        serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)

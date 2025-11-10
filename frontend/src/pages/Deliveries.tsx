@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useDeliveryStore } from '../store/deliveryStore';
 import { useOrderStore } from '../store/orderStore';
 import { format, startOfWeek, endOfWeek, addDays, isPast, isToday, isTomorrow } from 'date-fns';
+import { formatDate } from '../lib/utils';
 
 export default function Deliveries() {
   const { deliveries, loading, error, fetchDeliveries } = useDeliveryStore();
@@ -10,6 +11,7 @@ export default function Deliveries() {
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const [filter, setFilter] = useState<'all' | 'today' | 'tomorrow' | 'thisWeek' | 'overdue'>('all');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [searchTerm, setSearchTerm] = useState<string>('');
 
   useEffect(() => {
     loadDeliveries();
@@ -74,7 +76,24 @@ export default function Deliveries() {
     return isPast(date) && !isToday(date) && date < new Date();
   };
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Search is handled by filtering the displayed deliveries
+  };
+
   const filteredDeliveries = deliveries.filter((delivery) => {
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      if (
+        !delivery.id.toString().includes(searchLower) &&
+        !delivery.customer_name.toLowerCase().includes(searchLower) &&
+        !delivery.customer_phone.toLowerCase().includes(searchLower) &&
+        !delivery.status.toLowerCase().includes(searchLower) &&
+        !delivery.total_amount.toString().includes(searchLower)
+      ) {
+        return false;
+      }
+    }
     if (filter === 'overdue') {
       return isOverdue(delivery.delivery_date) && delivery.status !== 'delivered';
     }
@@ -92,51 +111,82 @@ export default function Deliveries() {
             <p className="text-sm sm:text-base text-text-secondary">Track upcoming deliveries and manage order status</p>
           </div>
 
-          {/* Filters */}
-          <div className="mb-6 flex flex-col gap-4">
-          <div className="flex gap-2 flex-wrap">
-            <button
-              onClick={() => setFilter('all')}
-              className={`px-4 py-2.5 min-h-[44px] rounded-lg transition-colors text-sm ${
-                filter === 'all' ? 'bg-primary text-white' : 'bg-white text-text-primary hover:bg-gray-50'
-              }`}
-            >
-              All
-            </button>
-            <button
-              onClick={() => setFilter('today')}
-              className={`px-4 py-2.5 min-h-[44px] rounded-lg transition-colors text-sm ${
-                filter === 'today' ? 'bg-primary text-white' : 'bg-white text-text-primary hover:bg-gray-50'
-              }`}
-            >
-              Today
-            </button>
-            <button
-              onClick={() => setFilter('tomorrow')}
-              className={`px-4 py-2.5 min-h-[44px] rounded-lg transition-colors text-sm ${
-                filter === 'tomorrow' ? 'bg-primary text-white' : 'bg-white text-text-primary hover:bg-gray-50'
-              }`}
-            >
-              Tomorrow
-            </button>
-            <button
-              onClick={() => setFilter('thisWeek')}
-              className={`px-4 py-2.5 min-h-[44px] rounded-lg transition-colors text-sm ${
-                filter === 'thisWeek' ? 'bg-primary text-white' : 'bg-white text-text-primary hover:bg-gray-50'
-              }`}
-            >
-              This Week
-            </button>
-            <button
-              onClick={() => setFilter('overdue')}
-              className={`px-4 py-2.5 min-h-[44px] rounded-lg transition-colors text-sm ${
-                filter === 'overdue' ? 'bg-red-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              Overdue
-            </button>
-          </div>
-        </div>
+          {/* Search/Filter Bar */}
+          <form onSubmit={handleSearch} className="mb-6">
+            <div className="flex gap-3 mb-3">
+              <div className="relative flex-[0.7]">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+                  <svg className="h-5 w-5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search by delivery ID, customer name, phone, status, or amount..."
+                  className="w-full px-4 py-2.5 pl-12 min-h-[44px] border border-border rounded-lg bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm hover:border-primary/50 transition-all duration-200 text-text-primary"
+                />
+              </div>
+              <button
+                type="submit"
+                className="btn-primary min-h-[44px] px-6"
+              >
+                Search
+              </button>
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm('')}
+                  className="px-4 py-2.5 min-h-[44px] bg-gray-100 text-text-secondary rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              <button
+                onClick={() => setFilter('all')}
+                className={`px-4 py-2.5 min-h-[44px] rounded-lg transition-colors text-sm ${
+                  filter === 'all' ? 'bg-primary text-white' : 'bg-white text-text-primary hover:bg-gray-50'
+                }`}
+              >
+                All
+              </button>
+              <button
+                onClick={() => setFilter('today')}
+                className={`px-4 py-2.5 min-h-[44px] rounded-lg transition-colors text-sm ${
+                  filter === 'today' ? 'bg-primary text-white' : 'bg-white text-text-primary hover:bg-gray-50'
+                }`}
+              >
+                Today
+              </button>
+              <button
+                onClick={() => setFilter('tomorrow')}
+                className={`px-4 py-2.5 min-h-[44px] rounded-lg transition-colors text-sm ${
+                  filter === 'tomorrow' ? 'bg-primary text-white' : 'bg-white text-text-primary hover:bg-gray-50'
+                }`}
+              >
+                Tomorrow
+              </button>
+              <button
+                onClick={() => setFilter('thisWeek')}
+                className={`px-4 py-2.5 min-h-[44px] rounded-lg transition-colors text-sm ${
+                  filter === 'thisWeek' ? 'bg-primary text-white' : 'bg-white text-text-primary hover:bg-gray-50'
+                }`}
+              >
+                This Week
+              </button>
+              <button
+                onClick={() => setFilter('overdue')}
+                className={`px-4 py-2.5 min-h-[44px] rounded-lg transition-colors text-sm ${
+                  filter === 'overdue' ? 'bg-red-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                Overdue
+              </button>
+            </div>
+          </form>
 
         {/* Error Message */}
         {error && (
@@ -163,14 +213,14 @@ export default function Deliveries() {
             ) : (
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                  <thead className="bg-gray-100 border-b-2 border-border">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order ID</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Delivery Date</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quick Actions</th>
+                      <th className="px-6 py-3 text-left text-xs font-bold text-text-primary uppercase">Order ID</th>
+                      <th className="px-6 py-3 text-left text-xs font-bold text-text-primary uppercase">Customer</th>
+                      <th className="px-6 py-3 text-left text-xs font-bold text-text-primary uppercase">Delivery Date</th>
+                      <th className="px-6 py-3 text-left text-xs font-bold text-text-primary uppercase">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-bold text-text-primary uppercase">Amount</th>
+                      <th className="px-6 py-3 text-left text-xs font-bold text-text-primary uppercase">Quick Actions</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -196,9 +246,9 @@ export default function Deliveries() {
                               <div className="text-gray-500">{delivery.customer_phone}</div>
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-text-primary">
                             <div>
-                              {deliveryDate.toLocaleDateString()}
+                              {formatDate(delivery.delivery_date)}
                               {overdue && (
                                 <span className="ml-2 text-xs text-red-600 font-medium">(Overdue)</span>
                               )}

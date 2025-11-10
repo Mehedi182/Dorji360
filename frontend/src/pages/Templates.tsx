@@ -3,6 +3,7 @@ import { useMeasurementStore } from '../store/measurementStore';
 import { useToastStore } from '../store/toastStore';
 import TemplateForm from '../components/TemplateForm';
 import ConfirmDialog from '../components/ConfirmDialog';
+import { formatDate } from '../lib/utils';
 import type { MeasurementTemplate } from '../lib/api';
 
 export default function Templates() {
@@ -19,7 +20,7 @@ export default function Templates() {
   const [showForm, setShowForm] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<number | null>(null);
   const [filterGender, setFilterGender] = useState<string>('');
-  const [filterGarmentType, setFilterGarmentType] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState<string>('');
   const [deleteConfirm, setDeleteConfirm] = useState<{ show: boolean; id: number | null }>({ show: false, id: null });
 
   useEffect(() => {
@@ -57,13 +58,26 @@ export default function Templates() {
     }
   };
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Search is handled by filtering the displayed templates
+  };
+
   const filteredTemplates = templates.filter((template) => {
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      if (
+        !template.id.toString().includes(searchLower) &&
+        !template.display_name.toLowerCase().includes(searchLower) &&
+        !template.garment_type.toLowerCase().includes(searchLower) &&
+        !template.gender.toLowerCase().includes(searchLower)
+      ) {
+        return false;
+      }
+    }
     if (filterGender && template.gender !== filterGender) return false;
-    if (filterGarmentType && template.garment_type !== filterGarmentType) return false;
     return true;
   });
-
-  const garmentTypes = Array.from(new Set(templates.map((t) => t.garment_type)));
 
   return (
     <div className="w-full">
@@ -85,31 +99,52 @@ export default function Templates() {
             </button>
           </div>
 
-          {/* Filters Bar */}
-          <div className="mb-6 flex flex-col sm:flex-row gap-3">
-            <select
-              value={filterGender}
-              onChange={(e) => setFilterGender(e.target.value)}
-              className="input-modern flex-1 min-h-[44px]"
-            >
-              <option value="">All Genders</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-              <option value="unisex">Unisex</option>
-            </select>
-            <select
-              value={filterGarmentType}
-              onChange={(e) => setFilterGarmentType(e.target.value)}
-              className="input-modern flex-1 min-h-[44px]"
-            >
-              <option value="">All Garment Types</option>
-              {garmentTypes.map((type) => (
-                <option key={type} value={type}>
-                  {type.charAt(0).toUpperCase() + type.slice(1)}
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Search/Filter Bar */}
+          <form onSubmit={handleSearch} className="mb-6">
+            <div className="flex gap-3 mb-3">
+              <div className="relative flex-[0.7]">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+                  <svg className="h-5 w-5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search by ID, display name, garment type, or gender..."
+                  className="w-full px-4 py-2.5 pl-12 min-h-[44px] border border-border rounded-lg bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm hover:border-primary/50 transition-all duration-200 text-text-primary"
+                />
+              </div>
+              <button
+                type="submit"
+                className="btn-primary min-h-[44px] px-6"
+              >
+                Search
+              </button>
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm('')}
+                  className="px-4 py-2.5 min-h-[44px] bg-gray-100 text-text-secondary rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <select
+                value={filterGender}
+                onChange={(e) => setFilterGender(e.target.value)}
+                className="input-modern flex-1 min-h-[44px]"
+              >
+                <option value="">All Genders</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="unisex">Unisex</option>
+              </select>
+            </div>
+          </form>
 
           {/* Error Message */}
           {error && (
@@ -142,27 +177,27 @@ export default function Templates() {
             ) : (
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                  <thead className="bg-gray-100 border-b-2 border-border">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-bold text-text-primary uppercase tracking-wider">
                         ID
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-bold text-text-primary uppercase tracking-wider">
                         Display Name
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-bold text-text-primary uppercase tracking-wider">
                         Garment Type
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-bold text-text-primary uppercase tracking-wider">
                         Gender
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-bold text-text-primary uppercase tracking-wider">
                         Fields
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-bold text-text-primary uppercase tracking-wider">
                         Created
                       </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-right text-xs font-bold text-text-primary uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
@@ -187,8 +222,8 @@ export default function Templates() {
                         <td className="px-6 py-4 text-sm text-gray-500">
                           {Object.keys(template.fields_json).length} fields
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(template.created_at).toLocaleDateString()}
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary">
+                          {formatDate(template.created_at)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <div className="flex items-center justify-end gap-2">
@@ -218,8 +253,8 @@ export default function Templates() {
                 </table>
               </div>
             )}
-          </div>
-        )}
+            </div>
+          )}
 
           {/* Delete Confirmation Dialog */}
           {deleteConfirm.show && (

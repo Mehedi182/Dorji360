@@ -19,14 +19,14 @@ export default function Samples() {
 
   const [showForm, setShowForm] = useState(false);
   const [editingSample, setEditingSample] = useState<number | null>(null);
-  const [filterGarmentType, setFilterGarmentType] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState<string>('');
   const [deleteConfirm, setDeleteConfirm] = useState<{ show: boolean; id: number | null }>({ show: false, id: null });
   const [selectedImage, setSelectedImage] = useState<Sample | null>(null);
 
   useEffect(() => {
-    fetchSamples(filterGarmentType || undefined);
+    fetchSamples();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterGarmentType]);
+  }, []);
 
   const handleEdit = async (id: number) => {
     await fetchSample(id);
@@ -37,7 +37,7 @@ export default function Samples() {
   const handleFormClose = () => {
     setShowForm(false);
     setEditingSample(null);
-    fetchSamples(filterGarmentType || undefined);
+    fetchSamples();
   };
 
   const handleDelete = (id: number) => {
@@ -57,11 +57,28 @@ export default function Samples() {
     }
   };
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Search is handled by filtering the displayed samples
+  };
+
+  const filteredSamples = samples.filter((sample) => {
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        sample.id.toString().includes(searchLower) ||
+        sample.garment_type.toLowerCase().includes(searchLower) ||
+        sample.description?.toLowerCase().includes(searchLower)
+      );
+    }
+    return true;
+  });
+
   const garmentTypes = Array.from(new Set(samples.map((s) => s.garment_type)));
 
   // Group samples by garment type
   const groupedSamples: Record<string, Sample[]> = {};
-  samples.forEach((sample) => {
+  filteredSamples.forEach((sample) => {
     if (!groupedSamples[sample.garment_type]) {
       groupedSamples[sample.garment_type] = [];
     }
@@ -88,21 +105,40 @@ export default function Samples() {
             </button>
           </div>
 
-          {/* Filters Bar */}
-          <div className="mb-6">
-            <select
-              value={filterGarmentType}
-              onChange={(e) => setFilterGarmentType(e.target.value)}
-              className="input-modern w-full min-h-[44px]"
-            >
-              <option value="">All Garment Types</option>
-              {garmentTypes.map((type) => (
-                <option key={type} value={type}>
-                  {type.charAt(0).toUpperCase() + type.slice(1)}
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Search/Filter Bar */}
+          <form onSubmit={handleSearch} className="mb-6">
+            <div className="flex gap-3 mb-3">
+              <div className="relative flex-[0.7]">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+                  <svg className="h-5 w-5 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search by ID, garment type, or description..."
+                  className="w-full px-4 py-2.5 pl-12 min-h-[44px] border border-border rounded-lg bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm hover:border-primary/50 transition-all duration-200 text-text-primary"
+                />
+              </div>
+              <button
+                type="submit"
+                className="btn-primary min-h-[44px] px-6"
+              >
+                Search
+              </button>
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm('')}
+                  className="px-4 py-2.5 min-h-[44px] bg-gray-100 text-text-secondary rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          </form>
 
           {/* Error Message */}
           {error && (
@@ -122,7 +158,7 @@ export default function Samples() {
         {/* Samples Gallery */}
         {!loading && (
           <>
-            {samples.length === 0 ? (
+            {filteredSamples.length === 0 ? (
               <div className="glass rounded-2xl shadow-xl shadow-black/5 p-12 text-center card-hover">
                 <p className="text-gray-500 text-lg mb-4">No samples found</p>
                 <button
@@ -227,7 +263,7 @@ export default function Samples() {
         {showForm && (
           <SampleForm
             sampleId={editingSample}
-            garmentType={filterGarmentType || undefined}
+            garmentType={undefined}
             onClose={handleFormClose}
           />
         )}

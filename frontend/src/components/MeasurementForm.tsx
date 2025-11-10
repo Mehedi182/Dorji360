@@ -29,13 +29,29 @@ export default function MeasurementForm({ measurementId, customerId, onClose }: 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    fetchTemplates();
     fetchCustomers();
     if (measurementId) {
       fetchMeasurement(measurementId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [measurementId]);
+
+  // Fetch templates filtered by customer's gender when customer is selected
+  useEffect(() => {
+    if (selectedCustomerId) {
+      const selectedCustomer = customers.find((c) => c.id === selectedCustomerId);
+      if (selectedCustomer) {
+        // Fetch templates matching customer's gender or unisex
+        const genderFilter = selectedCustomer.gender === 'unisex' ? undefined : selectedCustomer.gender;
+        fetchTemplates(undefined, genderFilter);
+      } else {
+        fetchTemplates();
+      }
+    } else {
+      fetchTemplates();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCustomerId, customers]);
 
   useEffect(() => {
     if (selectedMeasurement && measurementId && selectedMeasurement.id === measurementId) {
