@@ -66,20 +66,20 @@ export default function Templates() {
   const garmentTypes = Array.from(new Set(templates.map((t) => t.garment_type)));
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Measurement Templates</h1>
-          <p className="text-gray-600">Manage measurement templates for different garment types</p>
+    <div className="min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Measurement Templates</h1>
+          <p className="text-sm sm:text-base text-gray-600">Manage measurement templates for different garment types</p>
         </div>
 
         {/* Filters and Add Button */}
         <div className="mb-6 flex flex-col sm:flex-row gap-4">
-          <div className="flex-1 flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 flex-1">
             <select
               value={filterGender}
               onChange={(e) => setFilterGender(e.target.value)}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="flex-1 px-4 py-2.5 min-h-[44px] border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="">All Genders</option>
               <option value="male">Male</option>
@@ -89,7 +89,7 @@ export default function Templates() {
             <select
               value={filterGarmentType}
               onChange={(e) => setFilterGarmentType(e.target.value)}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="flex-1 px-4 py-2.5 min-h-[44px] border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="">All Garment Types</option>
               {garmentTypes.map((type) => (
@@ -101,7 +101,7 @@ export default function Templates() {
           </div>
           <button
             onClick={() => setShowForm(true)}
-            className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap"
+            className="px-6 py-2.5 min-h-[44px] bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap"
           >
             + Add Template
           </button>

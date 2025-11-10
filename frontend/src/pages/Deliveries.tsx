@@ -82,19 +82,19 @@ export default function Deliveries() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Delivery Tracking</h1>
-          <p className="text-gray-600">Track upcoming deliveries and manage order status</p>
+    <div className="min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Delivery Tracking</h1>
+          <p className="text-sm sm:text-base text-gray-600">Track upcoming deliveries and manage order status</p>
         </div>
 
         {/* Filters */}
-        <div className="mb-6 flex flex-col sm:flex-row gap-4">
+        <div className="mb-6 flex flex-col gap-4">
           <div className="flex gap-2 flex-wrap">
             <button
               onClick={() => setFilter('all')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
+              className={`px-4 py-2.5 min-h-[44px] rounded-lg transition-colors text-sm ${
                 filter === 'all' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
               }`}
             >
@@ -102,7 +102,7 @@ export default function Deliveries() {
             </button>
             <button
               onClick={() => setFilter('today')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
+              className={`px-4 py-2.5 min-h-[44px] rounded-lg transition-colors text-sm ${
                 filter === 'today' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
               }`}
             >
@@ -110,7 +110,7 @@ export default function Deliveries() {
             </button>
             <button
               onClick={() => setFilter('tomorrow')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
+              className={`px-4 py-2.5 min-h-[44px] rounded-lg transition-colors text-sm ${
                 filter === 'tomorrow' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
               }`}
             >
@@ -118,7 +118,7 @@ export default function Deliveries() {
             </button>
             <button
               onClick={() => setFilter('thisWeek')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
+              className={`px-4 py-2.5 min-h-[44px] rounded-lg transition-colors text-sm ${
                 filter === 'thisWeek' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
               }`}
             >
@@ -126,7 +126,7 @@ export default function Deliveries() {
             </button>
             <button
               onClick={() => setFilter('overdue')}
-              className={`px-4 py-2 rounded-lg transition-colors ${
+              className={`px-4 py-2.5 min-h-[44px] rounded-lg transition-colors text-sm ${
                 filter === 'overdue' ? 'bg-red-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
               }`}
             >
