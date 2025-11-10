@@ -74,7 +74,7 @@ export default function Measurements() {
   const garmentTypes = Array.from(new Set(measurements.map((m) => m.garment_type)));
 
   return (
-    <div className="min-h-screen">
+    <div className="w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         <div className="mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Measurement Book</h1>

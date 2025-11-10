@@ -21,7 +21,7 @@ export default function Layout({ children }: LayoutProps) {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/20">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/20 flex flex-col">
       {/* Combined Header & Navigation */}
       <header className="glass sticky top-0 z-40 shadow-lg shadow-black/5 border-b border-white/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -29,9 +29,10 @@ export default function Layout({ children }: LayoutProps) {
             {/* Logo & Brand */}
             <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
               <img 
-                src="/logo.png" 
+                src="/logo.png?v=2"
                 alt="Dorji360 Logo" 
                 className="h-8 sm:h-12 w-auto object-contain"
+                key="logo"
               />
               <div>
                 <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
@@ -109,7 +110,16 @@ export default function Layout({ children }: LayoutProps) {
       </header>
 
       {/* Main Content */}
-      <main className="pb-8">{children}</main>
+      <main className="flex-1 pb-8">{children}</main>
+
+      {/* Footer with Copyright */}
+      <footer className="mt-auto py-4 border-t border-white/20 bg-white/50 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center text-sm text-gray-600">
+            <p>© {new Date().getFullYear()} Dorji360. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
