@@ -86,24 +86,33 @@ export default function Orders() {
       cutting: 'bg-blue-100 text-blue-800',
       sewing: 'bg-purple-100 text-purple-800',
       ready: 'bg-green-100 text-green-800',
-      delivered: 'bg-gray-100 text-gray-800',
+      delivered: 'bg-gray-100 text-text-secondary',
     };
-    return colors[status] || 'bg-gray-100 text-gray-800';
+    return colors[status] || 'bg-gray-100 text-text-secondary';
   };
 
   return (
     <div className="w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-3">
-            Order Management
-          </h1>
-          <p className="text-gray-600 text-lg">Manage customer orders and track their status</p>
-        </div>
+        {/* Main Card Container */}
+        <div className="bg-white rounded-lg border border-border shadow-sm p-6">
+          {/* Header Section */}
+          <div className="flex items-start justify-between mb-6">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-text-primary mb-1">Order Management</h1>
+              <p className="text-sm sm:text-base text-text-secondary">Manage customer orders and track their status</p>
+            </div>
+            {/* Action Bar - Top Right */}
+            <button
+              onClick={() => setShowForm(true)}
+              className="btn-success min-h-[44px] whitespace-nowrap"
+            >
+              + Create Order
+            </button>
+          </div>
 
-        {/* Filters and Add Button */}
-        <div className="mb-6 flex flex-col sm:flex-row gap-4">
-          <div className="flex flex-col sm:flex-row gap-3 flex-1">
+          {/* Filters Bar */}
+          <div className="mb-6 flex flex-col sm:flex-row gap-3">
             <select
               value={selectedCustomerId}
               onChange={(e) => setSelectedCustomerId(e.target.value ? Number(e.target.value) : '')}
@@ -129,38 +138,31 @@ export default function Orders() {
               <option value="delivered">Delivered</option>
             </select>
           </div>
-          <button
-            onClick={() => setShowForm(true)}
-            className="btn-success whitespace-nowrap min-h-[44px]"
-          >
-            + Create Order
-          </button>
-        </div>
 
-        {/* Error Message */}
-        {error && (
-          <div className="mb-4 p-4 bg-red-50/80 backdrop-blur-sm border border-red-200 rounded-xl text-red-700 shadow-sm">
-            {error}
-          </div>
-        )}
+          {/* Error Message */}
+          {error && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 shadow-sm">
+              {error}
+            </div>
+          )}
 
-        {/* Loading State */}
-        {loading && (
-          <div className="text-center py-16">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600"></div>
-            <p className="mt-4 text-gray-600 font-medium">Loading...</p>
-          </div>
-        )}
+          {/* Loading State */}
+          {loading && (
+            <div className="text-center py-16">
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-border border-t-primary"></div>
+              <p className="mt-4 text-text-secondary font-medium">Loading...</p>
+            </div>
+          )}
 
-        {/* Orders List */}
-        {!loading && (
-          <div className="glass rounded-2xl shadow-xl shadow-black/5 overflow-hidden card-hover">
+          {/* Orders List */}
+          {!loading && (
+            <div className="overflow-hidden">
             {orders.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">No orders found</p>
+                <p className="text-text-secondary text-lg">No orders found</p>
                 <button
                   onClick={() => setShowForm(true)}
-                  className="mt-4 text-blue-600 hover:text-blue-700"
+                  className="mt-4 text-primary hover:text-[#2A4F7A]"
                 >
                   Create your first order
                 </button>
@@ -173,13 +175,13 @@ export default function Orders() {
                     <div
                       key={order.id}
                       onClick={() => setSelectedOrder(order)}
-                      className="glass rounded-xl p-4 shadow-md border border-white/20 cursor-pointer hover:shadow-lg transition-all"
+                      className="bg-white rounded-lg p-4 shadow-sm border border-border cursor-pointer hover:shadow-md transition-all"
                     >
                       <div className="flex items-start justify-between mb-3">
                         <div>
-                          <h3 className="font-bold text-lg text-gray-900">Order #{order.id}</h3>
-                          <p className="text-sm text-gray-600">{order.customer_name}</p>
-                          <p className="text-xs text-gray-500">{order.customer_phone}</p>
+                          <h3 className="font-bold text-lg text-text-primary">Order #{order.id}</h3>
+                          <p className="text-sm text-text-secondary">{order.customer_name}</p>
+                          <p className="text-xs text-text-secondary">{order.customer_phone}</p>
                         </div>
                         <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                           <button
@@ -187,7 +189,7 @@ export default function Orders() {
                               e.stopPropagation();
                               handleEdit(order.id);
                             }}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                            className="p-2 text-primary hover:bg-blue-50 rounded-lg"
                             type="button"
                           >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -210,12 +212,12 @@ export default function Orders() {
                       </div>
                       <div className="grid grid-cols-2 gap-3 mb-3">
                         <div>
-                          <p className="text-xs text-gray-500">Items</p>
-                          <p className="text-sm font-medium">{order.items.length} item(s)</p>
+                          <p className="text-xs text-text-secondary">Items</p>
+                          <p className="text-sm font-medium text-text-primary">{order.items.length} item(s)</p>
                         </div>
                         <div>
-                          <p className="text-xs text-gray-500">Total</p>
-                          <p className="text-sm font-bold">৳{order.total_amount.toFixed(2)}</p>
+                          <p className="text-xs text-text-secondary">Total</p>
+                          <p className="text-sm font-bold text-text-primary">৳{order.total_amount.toFixed(2)}</p>
                         </div>
                       </div>
                       <div className="flex items-center justify-between">
@@ -234,7 +236,7 @@ export default function Orders() {
                           <option value="ready">Ready</option>
                           <option value="delivered">Delivered</option>
                         </select>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-text-secondary">
                           {new Date(order.delivery_date).toLocaleDateString()}
                         </p>
                       </div>
@@ -244,38 +246,38 @@ export default function Orders() {
 
                 {/* Desktop Table View */}
                 <div className="hidden lg:block overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200/50">
-                    <thead className="bg-gradient-to-r from-gray-50 to-gray-100/50">
+                  <table className="min-w-full divide-y divide-border">
+                    <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase">ID</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase">Customer</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase">Items</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase">Total</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase">Status</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase">Delivery Date</th>
-                        <th className="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase">Actions</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase">ID</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase">Customer</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase">Items</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase">Total</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase">Status</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-text-secondary uppercase">Delivery Date</th>
+                        <th className="px-6 py-4 text-right text-xs font-semibold text-text-secondary uppercase">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white/50 divide-y divide-gray-200/30">
+                    <tbody className="bg-white divide-y divide-border">
                       {orders.map((order) => (
                         <tr
                           key={order.id}
-                          className="hover:bg-blue-50/50 cursor-pointer transition-all duration-150 group"
+                          className="hover:bg-gray-50 cursor-pointer transition-all duration-150 group"
                           onClick={() => setSelectedOrder(order)}
                         >
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-text-primary group-hover:text-primary transition-colors">
                             #{order.id}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-text-primary">
                             <div>
                               <div className="font-semibold">{order.customer_name}</div>
-                              <div className="text-gray-600 text-xs">{order.customer_phone}</div>
+                              <div className="text-text-secondary text-xs">{order.customer_phone}</div>
                             </div>
                           </td>
-                          <td className="px-6 py-4 text-sm text-gray-600">
+                          <td className="px-6 py-4 text-sm text-text-secondary">
                             {order.items.length} item(s)
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-text-primary">
                             ৳{order.total_amount.toFixed(2)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
@@ -295,7 +297,7 @@ export default function Orders() {
                               <option value="delivered">Delivered</option>
                             </select>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary">
                             {new Date(order.delivery_date).toLocaleDateString()}
                           </td>
                           <td 
@@ -308,7 +310,7 @@ export default function Orders() {
                                   e.stopPropagation();
                                   handleEdit(order.id);
                                 }}
-                                className="text-blue-600 hover:text-blue-700 transition-all p-2 hover:bg-blue-50 rounded-lg relative z-10 pointer-events-auto"
+                                className="text-primary hover:text-[#2A4F7A] transition-all p-2 hover:bg-blue-50 rounded-lg relative z-10 pointer-events-auto"
                                 title="Edit order"
                                 type="button"
                               >
@@ -341,6 +343,20 @@ export default function Orders() {
           </div>
         )}
 
+          {/* Delete Confirmation Dialog */}
+          {deleteConfirm.show && (
+            <ConfirmDialog
+              title="Delete Order"
+              message={`Are you sure you want to delete order #${deleteConfirm.id}? This action cannot be undone.`}
+              confirmText="Delete"
+              cancelText="Cancel"
+              onConfirm={confirmDelete}
+              onCancel={() => setDeleteConfirm({ show: false, id: null })}
+              type="danger"
+            />
+          )}
+        </div>
+
         {/* Order Form Modal */}
         {showForm && (
           <OrderForm
@@ -359,19 +375,6 @@ export default function Orders() {
               setSelectedOrder(null);
               handleEdit(selectedOrder.id);
             }}
-          />
-        )}
-
-        {/* Delete Confirmation Dialog */}
-        {deleteConfirm.show && (
-          <ConfirmDialog
-            title="Delete Order"
-            message={`Are you sure you want to delete order #${deleteConfirm.id}? This action cannot be undone.`}
-            confirmText="Delete"
-            cancelText="Cancel"
-            onConfirm={confirmDelete}
-            onCancel={() => setDeleteConfirm({ show: false, id: null })}
-            type="danger"
           />
         )}
       </div>

@@ -71,16 +71,25 @@ export default function Samples() {
   return (
     <div className="w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
-        <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2 sm:mb-3">
-            Sample Gallery
-          </h1>
-          <p className="text-gray-600 text-sm sm:text-base lg:text-lg">Showcase your work samples to customers</p>
-        </div>
+        {/* Main Card Container */}
+        <div className="bg-white rounded-lg border border-border shadow-sm p-6">
+          {/* Header Section */}
+          <div className="flex items-start justify-between mb-6">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-text-primary mb-1">Sample Gallery</h1>
+              <p className="text-sm sm:text-base text-text-secondary">Showcase your work samples to customers</p>
+            </div>
+            {/* Action Bar - Top Right */}
+            <button
+              onClick={() => setShowForm(true)}
+              className="btn-success min-h-[44px] whitespace-nowrap"
+            >
+              + Add Sample
+            </button>
+          </div>
 
-        {/* Filters and Add Button */}
-        <div className="mb-6 flex flex-col sm:flex-row gap-4">
-          <div className="flex-1">
+          {/* Filters Bar */}
+          <div className="mb-6">
             <select
               value={filterGarmentType}
               onChange={(e) => setFilterGarmentType(e.target.value)}
@@ -94,28 +103,21 @@ export default function Samples() {
               ))}
             </select>
           </div>
-          <button
-            onClick={() => setShowForm(true)}
-            className="btn-success whitespace-nowrap min-h-[44px]"
-          >
-            + Add Sample
-          </button>
-        </div>
 
-        {/* Error Message */}
-        {error && (
-          <div className="mb-4 p-4 bg-red-50/80 backdrop-blur-sm border border-red-200 rounded-xl text-red-700 shadow-sm">
-            {error}
-          </div>
-        )}
+          {/* Error Message */}
+          {error && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 shadow-sm">
+              {error}
+            </div>
+          )}
 
-        {/* Loading State */}
-        {loading && (
-          <div className="text-center py-16">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600"></div>
-            <p className="mt-4 text-gray-600 font-medium">Loading...</p>
-          </div>
-        )}
+          {/* Loading State */}
+          {loading && (
+            <div className="text-center py-16">
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-border border-t-primary"></div>
+              <p className="mt-4 text-text-secondary font-medium">Loading...</p>
+            </div>
+          )}
 
         {/* Samples Gallery */}
         {!loading && (
@@ -230,17 +232,23 @@ export default function Samples() {
           />
         )}
 
-        {/* Delete Confirmation Dialog */}
-        {deleteConfirm.show && (
-          <ConfirmDialog
-            title="Delete Sample"
-            message="Are you sure you want to delete this sample? This action cannot be undone."
-            confirmText="Delete"
-            cancelText="Cancel"
-            type="danger"
-            onConfirm={confirmDelete}
-            onCancel={() => setDeleteConfirm({ show: false, id: null })}
-          />
+          {/* Delete Confirmation Dialog */}
+          {deleteConfirm.show && (
+            <ConfirmDialog
+              title="Delete Sample"
+              message="Are you sure you want to delete this sample? This action cannot be undone."
+              confirmText="Delete"
+              cancelText="Cancel"
+              type="danger"
+              onConfirm={confirmDelete}
+              onCancel={() => setDeleteConfirm({ show: false, id: null })}
+            />
+          )}
+        </div>
+
+        {/* Sample Form Modal */}
+        {showForm && (
+          <SampleForm onClose={handleFormClose} />
         )}
 
         {/* Image Modal */}

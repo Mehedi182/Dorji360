@@ -76,18 +76,29 @@ export default function Measurements() {
   return (
     <div className="w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
-        <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Measurement Book</h1>
-          <p className="text-sm sm:text-base text-gray-600">Manage customer measurements for different garment types</p>
-        </div>
+        {/* Main Card Container */}
+        <div className="bg-white rounded-lg border border-border shadow-sm p-6">
+          {/* Header Section */}
+          <div className="flex items-start justify-between mb-6">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-text-primary mb-1">Measurement Book</h1>
+              <p className="text-sm sm:text-base text-text-secondary">Manage customer measurements for different garment types</p>
+            </div>
+            {/* Action Bar - Top Right */}
+            <button
+              onClick={() => setShowForm(true)}
+              className="btn-success min-h-[44px] whitespace-nowrap"
+            >
+              + Add Measurement
+            </button>
+          </div>
 
-        {/* Filters and Add Button */}
-        <div className="mb-6 flex flex-col sm:flex-row gap-4">
-          <div className="flex flex-col sm:flex-row gap-2 flex-1">
+          {/* Filters Bar */}
+          <div className="mb-6 flex flex-col sm:flex-row gap-3">
             <select
               value={selectedCustomerId}
               onChange={(e) => setSelectedCustomerId(e.target.value ? Number(e.target.value) : '')}
-              className="flex-1 px-4 py-2.5 min-h-[44px] border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="input-modern flex-1 min-h-[44px]"
             >
               <option value="">All Customers</option>
               {customers.map((customer) => (
@@ -99,7 +110,7 @@ export default function Measurements() {
             <select
               value={selectedGarmentType}
               onChange={(e) => setSelectedGarmentType(e.target.value)}
-              className="flex-1 px-4 py-2.5 min-h-[44px] border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="input-modern flex-1 min-h-[44px]"
             >
               <option value="">All Garment Types</option>
               {garmentTypes.map((type) => (
@@ -109,32 +120,25 @@ export default function Measurements() {
               ))}
             </select>
           </div>
-          <button
-            onClick={() => setShowForm(true)}
-            className="px-6 py-2.5 min-h-[44px] bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap"
-          >
-            + Add Measurement
-          </button>
-        </div>
 
-        {/* Error Message */}
-        {error && (
-          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-            {error}
-          </div>
-        )}
+          {/* Error Message */}
+          {error && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 shadow-sm">
+              {error}
+            </div>
+          )}
 
-        {/* Loading State */}
-        {loading && (
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <p className="mt-2 text-gray-600">Loading...</p>
-          </div>
-        )}
+          {/* Loading State */}
+          {loading && (
+            <div className="text-center py-16">
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-border border-t-primary"></div>
+              <p className="mt-4 text-text-secondary font-medium">Loading...</p>
+            </div>
+          )}
 
-        {/* Measurements List */}
-        {!loading && (
-          <div className="glass rounded-2xl shadow-xl shadow-black/5 overflow-hidden">
+          {/* Measurements List */}
+          {!loading && (
+            <div className="overflow-hidden">
             {measurements.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-gray-500 text-lg">No measurements found</p>
@@ -293,6 +297,20 @@ export default function Measurements() {
           </div>
         )}
 
+          {/* Delete Confirmation Dialog */}
+          {deleteConfirm.show && (
+            <ConfirmDialog
+              title="Delete Measurement"
+              message="Are you sure you want to delete this measurement? This action cannot be undone."
+              confirmText="Delete"
+              cancelText="Cancel"
+              type="danger"
+              onConfirm={confirmDelete}
+              onCancel={() => setDeleteConfirm({ show: false, id: null })}
+            />
+          )}
+        </div>
+
         {/* Measurement Form Modal */}
         {showForm && (
           <MeasurementForm
@@ -311,19 +329,6 @@ export default function Measurements() {
               setSelectedMeasurement(null);
               handleEdit(selectedMeasurement.id);
             }}
-          />
-        )}
-
-        {/* Delete Confirmation Dialog */}
-        {deleteConfirm.show && (
-          <ConfirmDialog
-            title="Delete Measurement"
-            message="Are you sure you want to delete this measurement? This action cannot be undone."
-            confirmText="Delete"
-            cancelText="Cancel"
-            type="danger"
-            onConfirm={confirmDelete}
-            onCancel={() => setDeleteConfirm({ show: false, id: null })}
           />
         )}
       </div>

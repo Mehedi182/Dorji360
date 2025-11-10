@@ -6,6 +6,13 @@ export default {
   ],
   theme: {
     extend: {
+      colors: {
+        'primary': '#2C5282',      // Deep Blue - Primary Accent
+        'success': '#38A169',       // Emerald Green - Success/Action
+        'text-primary': '#1A202C',  // Dark Grey - Primary Text
+        'text-secondary': '#718096', // Medium Grey - Secondary Text
+        'border': '#E2E8F0',        // Light Grey - Shadow/Border
+      },
       animation: {
         fadeIn: 'fadeIn 0.2s ease-in-out',
         slideUp: 'slideUp 0.3s ease-out',

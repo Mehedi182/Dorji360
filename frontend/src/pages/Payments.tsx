@@ -38,51 +38,52 @@ export default function Payments() {
   return (
     <div className="w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
-        <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2 sm:mb-3">
-            Payments & Billing
-          </h1>
-          <p className="text-gray-600 text-sm sm:text-base lg:text-lg">Track payments and manage billing</p>
-        </div>
+        {/* Main Card Container */}
+        <div className="bg-white rounded-lg border border-border shadow-sm p-6">
+          {/* Header Section */}
+          <div className="mb-6">
+            <h1 className="text-2xl sm:text-3xl font-bold text-text-primary mb-1">Payments & Billing</h1>
+            <p className="text-sm sm:text-base text-text-secondary">Track payments and manage billing</p>
+          </div>
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
-          <div className="glass p-4 sm:p-6 rounded-2xl shadow-lg shadow-black/5 card-hover">
-            <div className="text-xs sm:text-sm text-gray-600 mb-2 font-medium">Total Payments</div>
-            <div className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-green-600 to-green-700 bg-clip-text text-transparent">৳{totalPayments.toFixed(2)}</div>
+          {/* Summary Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
+            <div className="glass p-4 sm:p-6 rounded-lg shadow-sm card-hover">
+              <div className="text-xs sm:text-sm text-text-secondary mb-2 font-medium">Total Payments</div>
+              <div className="text-2xl sm:text-3xl font-bold text-success">৳{totalPayments.toFixed(2)}</div>
+            </div>
+            <div className="glass p-4 sm:p-6 rounded-lg shadow-sm card-hover">
+              <div className="text-xs sm:text-sm text-text-secondary mb-2 font-medium">Total Orders</div>
+              <div className="text-2xl sm:text-3xl font-bold text-primary">{orders.length}</div>
+            </div>
+            <div className="glass p-4 sm:p-6 rounded-lg shadow-sm card-hover sm:col-span-2 lg:col-span-1">
+              <div className="text-xs sm:text-sm text-text-secondary mb-2 font-medium">Payment Records</div>
+              <div className="text-2xl sm:text-3xl font-bold text-text-primary">{payments.length}</div>
+            </div>
           </div>
-          <div className="glass p-4 sm:p-6 rounded-2xl shadow-lg shadow-black/5 card-hover">
-            <div className="text-xs sm:text-sm text-gray-600 mb-2 font-medium">Total Orders</div>
-            <div className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">{orders.length}</div>
-          </div>
-          <div className="glass p-4 sm:p-6 rounded-2xl shadow-lg shadow-black/5 card-hover sm:col-span-2 lg:col-span-1">
-            <div className="text-xs sm:text-sm text-gray-600 mb-2 font-medium">Payment Records</div>
-            <div className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-purple-600 to-purple-700 bg-clip-text text-transparent">{payments.length}</div>
-          </div>
-        </div>
 
-        {/* Filter */}
-        <div className="mb-6">
-          <select
-            value={selectedOrderId}
-            onChange={(e) => setSelectedOrderId(e.target.value ? Number(e.target.value) : '')}
-            className="w-full px-4 py-2.5 min-h-[44px] border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">All Orders</option>
-            {orders.map((order) => (
-              <option key={order.id} value={order.id}>
-                Order #{order.id} - {order.customer_name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Error Message */}
-        {error && (
-          <div className="mb-4 p-4 bg-red-50/80 backdrop-blur-sm border border-red-200 rounded-xl text-red-700 shadow-sm">
-            {error}
+          {/* Filter */}
+          <div className="mb-6">
+            <select
+              value={selectedOrderId}
+              onChange={(e) => setSelectedOrderId(e.target.value ? Number(e.target.value) : '')}
+              className="input-modern w-full min-h-[44px]"
+            >
+              <option value="">All Orders</option>
+              {orders.map((order) => (
+                <option key={order.id} value={order.id}>
+                  Order #{order.id} - {order.customer_name}
+                </option>
+              ))}
+            </select>
           </div>
-        )}
+
+          {/* Error Message */}
+          {error && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 shadow-sm">
+              {error}
+            </div>
+          )}
 
         {/* Loading State */}
         {loading && (
@@ -194,6 +195,7 @@ export default function Payments() {
             )}
           </div>
         )}
+        </div>
       </div>
     </div>
   );

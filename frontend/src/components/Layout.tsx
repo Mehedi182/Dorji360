@@ -21,9 +21,9 @@ export default function Layout({ children }: LayoutProps) {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/20 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Combined Header & Navigation */}
-      <header className="glass sticky top-0 z-40 shadow-lg shadow-black/5 border-b border-white/20">
+      <header className="bg-white sticky top-0 z-40 shadow-sm border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo & Brand */}
@@ -35,10 +35,10 @@ export default function Layout({ children }: LayoutProps) {
                 key="logo"
               />
               <div>
-                <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                <h1 className="text-lg sm:text-xl font-bold text-primary">
                   Dorji360
                 </h1>
-                <p className="text-xs text-gray-500 hidden sm:block">Professional Tailoring Management</p>
+                <p className="text-xs text-text-secondary hidden sm:block">Professional Tailoring Management</p>
               </div>
             </div>
 
@@ -52,8 +52,8 @@ export default function Layout({ children }: LayoutProps) {
                     to={item.path}
                     className={`px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 whitespace-nowrap ${
                       isActive
-                        ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/25'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
+                        ? 'bg-primary text-white shadow-sm'
+                        : 'text-text-secondary hover:text-text-primary hover:bg-gray-50'
                     }`}
                   >
                     <span className="mr-1.5 text-base">{item.icon}</span>
@@ -66,7 +66,7 @@ export default function Layout({ children }: LayoutProps) {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-white/50 transition-colors"
+              className="lg:hidden p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-gray-50 transition-colors"
               aria-label="Toggle menu"
             >
               {mobileMenuOpen ? (
@@ -83,7 +83,7 @@ export default function Layout({ children }: LayoutProps) {
 
           {/* Mobile Navigation */}
           {mobileMenuOpen && (
-            <div className="lg:hidden py-4 border-t border-white/20 animate-slideDown">
+            <div className="lg:hidden py-4 border-t border-border animate-slideDown">
               <nav className="grid grid-cols-2 gap-2">
                 {navItems.map((item) => {
                   const isActive = location.pathname === item.path;
@@ -94,8 +94,8 @@ export default function Layout({ children }: LayoutProps) {
                       onClick={() => setMobileMenuOpen(false)}
                       className={`px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 text-center ${
                         isActive
-                          ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/25'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
+                          ? 'bg-primary text-white shadow-sm'
+                          : 'text-text-secondary hover:text-text-primary hover:bg-gray-50'
                       }`}
                     >
                       <span className="mr-2 text-base">{item.icon}</span>
@@ -113,9 +113,9 @@ export default function Layout({ children }: LayoutProps) {
       <main className="flex-1 pb-8">{children}</main>
 
       {/* Footer with Copyright */}
-      <footer className="mt-auto py-4 border-t border-white/20 bg-white/50 backdrop-blur-sm">
+      <footer className="mt-auto py-4 border-t border-border bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center text-sm text-gray-600">
+          <div className="text-center text-sm text-text-secondary">
             <p>© {new Date().getFullYear()} Dorji360. All rights reserved.</p>
           </div>
         </div>
