@@ -64,12 +64,22 @@ class OrderViewSet(viewsets.ModelViewSet):
         # Create order items and calculate total
         total_amount = 0
         for item_data in data['items']:
+            measurement_id = item_data.get('measurement_id')
+            measurement = None
+            if measurement_id:
+                from measurements.models import Measurement
+                try:
+                    measurement = Measurement.objects.get(id=measurement_id)
+                except Measurement.DoesNotExist:
+                    pass  # Skip invalid measurement ID
+            
             item = OrderItem.objects.create(
                 order=order,
                 garment_type=item_data['garment_type'],
                 quantity=item_data['quantity'],
                 price=item_data['price'],
-                fabric_details=item_data.get('fabric_details', '')
+                fabric_details=item_data.get('fabric_details', ''),
+                measurement=measurement
             )
             total_amount += float(item.price) * item.quantity
         

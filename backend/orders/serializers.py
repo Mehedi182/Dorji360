@@ -6,11 +6,12 @@ from staff.models import OrderStaffAssignment
 
 class OrderItemSerializer(serializers.ModelSerializer):
     price = serializers.SerializerMethodField()
+    measurement_id = serializers.IntegerField(source='measurement.id', read_only=True, allow_null=True)
     
     class Meta:
         model = OrderItem
-        fields = ['id', 'order_id', 'garment_type', 'quantity', 'price', 'fabric_details']
-        read_only_fields = ['id', 'order_id']
+        fields = ['id', 'order_id', 'garment_type', 'quantity', 'price', 'fabric_details', 'measurement_id']
+        read_only_fields = ['id', 'order_id', 'measurement_id']
     
     def get_price(self, obj):
         return float(obj.price)
@@ -21,6 +22,7 @@ class OrderItemCreateSerializer(serializers.Serializer):
     quantity = serializers.IntegerField(min_value=1)
     price = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0)
     fabric_details = serializers.CharField(required=False, allow_blank=True)
+    measurement_id = serializers.IntegerField(required=False, allow_null=True)
 
 
 class OrderSerializer(serializers.ModelSerializer):

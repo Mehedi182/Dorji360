@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useOrderStore } from '../store/orderStore';
 import { useCustomerStore } from '../store/customerStore';
 import { useStaffStore } from '../store/staffStore';
+import { useMeasurementStore } from '../store/measurementStore';
 import type { OrderItemCreate, OrderCreate } from '../lib/api';
 
 interface OrderFormProps {
@@ -30,6 +31,7 @@ export default function OrderForm({ orderId, customerId, onClose }: OrderFormPro
   const { createOrder, updateOrder, loading, selectedOrder, fetchOrder } = useOrderStore();
   const { customers, fetchCustomers } = useCustomerStore();
   const { staff, fetchStaff } = useStaffStore();
+  const { measurements, fetchMeasurements } = useMeasurementStore();
 
   const [selectedCustomerId, setSelectedCustomerId] = useState<number | ''>(customerId || '');
   const [orderDate, setOrderDate] = useState('');
@@ -38,7 +40,7 @@ export default function OrderForm({ orderId, customerId, onClose }: OrderFormPro
   const [notes, setNotes] = useState('');
   const [selectedStaffIds, setSelectedStaffIds] = useState<number[]>([]);
   const [items, setItems] = useState<OrderItemCreate[]>([
-    { garment_type: '', quantity: 1, price: 0, fabric_details: '' },
+    { garment_type: '', quantity: 1, price: 0, fabric_details: '', measurement_id: undefined },
   ]);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -55,6 +57,16 @@ export default function OrderForm({ orderId, customerId, onClose }: OrderFormPro
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId]);
 
+  // Fetch measurements when customer is selected
+  useEffect(() => {
+    if (selectedCustomerId) {
+      fetchMeasurements(Number(selectedCustomerId));
+    } else {
+      fetchMeasurements();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCustomerId]);
+
   useEffect(() => {
     if (selectedOrder && orderId && selectedOrder.id === orderId) {
       setSelectedCustomerId(selectedOrder.customer_id);
@@ -69,6 +81,7 @@ export default function OrderForm({ orderId, customerId, onClose }: OrderFormPro
           quantity: item.quantity,
           price: item.price,
           fabric_details: item.fabric_details || '',
+          measurement_id: undefined, // Will be loaded from order if available
         }))
       );
     } else if (!orderId) {
@@ -79,18 +92,18 @@ export default function OrderForm({ orderId, customerId, onClose }: OrderFormPro
       setStatus('pending');
       setNotes('');
       setSelectedStaffIds([]);
-      setItems([{ garment_type: '', quantity: 1, price: 0, fabric_details: '' }]);
+      setItems([{ garment_type: '', quantity: 1, price: 0, fabric_details: '', measurement_id: undefined }]);
     }
   }, [selectedOrder, orderId, customerId]);
 
-  const handleItemChange = (index: number, field: keyof OrderItemCreate, value: string | number) => {
+  const handleItemChange = (index: number, field: keyof OrderItemCreate, value: string | number | undefined) => {
     const newItems = [...items];
     newItems[index] = { ...newItems[index], [field]: value };
     setItems(newItems);
   };
 
   const handleAddItem = () => {
-    setItems([...items, { garment_type: '', quantity: 1, price: 0, fabric_details: '' }]);
+    setItems([...items, { garment_type: '', quantity: 1, price: 0, fabric_details: '', measurement_id: undefined }]);
   };
 
   const handleRemoveItem = (index: number) => {
@@ -117,6 +130,9 @@ export default function OrderForm({ orderId, customerId, onClose }: OrderFormPro
       if (item.price < 0) {
         newErrors[`item_${index}_price`] = 'Price must be 0 or greater';
       }
+      if (!orderId && !item.measurement_id) {
+        newErrors[`item_${index}_measurement`] = 'Measurement is required';
+      }
     });
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -136,6 +152,7 @@ export default function OrderForm({ orderId, customerId, onClose }: OrderFormPro
           quantity: item.quantity,
           price: item.price,
           fabric_details: item.fabric_details || undefined,
+          measurement_id: item.measurement_id || undefined,
         })),
         notes: notes || undefined,
         assigned_staff_ids: selectedStaffIds.length > 0 ? selectedStaffIds : undefined,
@@ -182,7 +199,11 @@ export default function OrderForm({ orderId, customerId, onClose }: OrderFormPro
               <select
                 id="customer"
                 value={selectedCustomerId}
-                onChange={(e) => setSelectedCustomerId(e.target.value ? Number(e.target.value) : '')}
+                onChange={(e) => {
+                  setSelectedCustomerId(e.target.value ? Number(e.target.value) : '');
+                  // Reset all item measurements when customer changes
+                  setItems(items.map(item => ({ ...item, measurement_id: undefined })));
+                }}
                 disabled={!!customerId}
                 className={`input-modern w-full ${
                   errors.customer ? 'border-red-500 focus:ring-red-500/50' : ''
@@ -262,88 +283,132 @@ export default function OrderForm({ orderId, customerId, onClose }: OrderFormPro
                 </button>
               </div>
 
-              {items.map((item, index) => (
-                <div key={index} className="mb-4 p-5 bg-gradient-to-br from-gray-50 to-white border border-gray-200/50 rounded-xl shadow-sm">
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="text-sm font-medium text-gray-700">Item {index + 1}</span>
-                    {items.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveItem(index)}
-                        className="text-red-600 hover:text-red-800 text-sm"
-                      >
-                        Remove
-                      </button>
-                    )}
+              {items.map((item, index) => {
+                // Filter measurements by garment type if garment type is entered
+                const filteredMeasurements = item.garment_type
+                  ? measurements.filter(m => m.garment_type.toLowerCase() === item.garment_type.toLowerCase())
+                  : measurements;
+
+                return (
+                  <div key={index} className="mb-4 p-5 bg-gradient-to-br from-gray-50 to-white border border-gray-200/50 rounded-xl shadow-sm">
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="text-sm font-medium text-gray-700">Item {index + 1}</span>
+                      {items.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveItem(index)}
+                          className="text-red-600 hover:text-red-800 text-sm"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Garment Type *
+                        </label>
+                        <input
+                          type="text"
+                          value={item.garment_type}
+                          onChange={(e) => {
+                            handleItemChange(index, 'garment_type', e.target.value);
+                            // Reset measurement when garment type changes
+                            handleItemChange(index, 'measurement_id', undefined);
+                          }}
+                          className={`input-modern w-full ${
+                            errors[`item_${index}_type`] ? 'border-red-500 focus:ring-red-500/50' : ''
+                          }`}
+                          placeholder="e.g., Blazer, Pant, Shirt"
+                        />
+                        {errors[`item_${index}_type`] && (
+                          <p className="mt-1 text-sm text-red-600">{errors[`item_${index}_type`]}</p>
+                        )}
+                      </div>
+                      {!orderId && selectedCustomerId && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Measurement *
+                          </label>
+                          <select
+                            value={item.measurement_id || ''}
+                            onChange={(e) => handleItemChange(index, 'measurement_id', e.target.value ? Number(e.target.value) : undefined)}
+                            className={`input-modern w-full ${
+                              errors[`item_${index}_measurement`] ? 'border-red-500 focus:ring-red-500/50' : ''
+                            }`}
+                          >
+                            <option value="">Select measurement</option>
+                            {filteredMeasurements.length === 0 && measurements.length > 0 ? (
+                              <option value="" disabled>
+                                No measurements for {item.garment_type || 'this garment type'}
+                              </option>
+                            ) : (
+                              filteredMeasurements.map((measurement) => (
+                                <option key={measurement.id} value={measurement.id}>
+                                  {measurement.template_name} ({measurement.garment_type}) - {new Date(measurement.created_at).toLocaleDateString()}
+                                </option>
+                              ))
+                            )}
+                          </select>
+                          {errors[`item_${index}_measurement`] && (
+                            <p className="mt-1 text-sm text-red-600">{errors[`item_${index}_measurement`]}</p>
+                          )}
+                          {measurements.length === 0 && selectedCustomerId && (
+                            <p className="mt-1 text-xs text-gray-500">No measurements found for this customer</p>
+                          )}
+                        </div>
+                      )}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Quantity *
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          value={item.quantity}
+                          onChange={(e) => handleItemChange(index, 'quantity', parseInt(e.target.value) || 1)}
+                          className={`w-full px-3 py-2 border rounded-lg ${
+                            errors[`item_${index}_quantity`] ? 'border-red-500' : 'border-gray-300'
+                          }`}
+                        />
+                        {errors[`item_${index}_quantity`] && (
+                          <p className="mt-1 text-sm text-red-600">{errors[`item_${index}_quantity`]}</p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Price (BDT) *
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={item.price}
+                          onChange={(e) => handleItemChange(index, 'price', parseFloat(e.target.value) || 0)}
+                          className={`w-full px-3 py-2 border rounded-lg ${
+                            errors[`item_${index}_price`] ? 'border-red-500' : 'border-gray-300'
+                          }`}
+                        />
+                        {errors[`item_${index}_price`] && (
+                          <p className="mt-1 text-sm text-red-600">{errors[`item_${index}_price`]}</p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Fabric Details
+                        </label>
+                        <input
+                          type="text"
+                          value={item.fabric_details}
+                          onChange={(e) => handleItemChange(index, 'fabric_details', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                          placeholder="Fabric description"
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Garment Type *
-                      </label>
-                      <input
-                        type="text"
-                        value={item.garment_type}
-                        onChange={(e) => handleItemChange(index, 'garment_type', e.target.value)}
-                        className={`input-modern w-full ${
-                          errors[`item_${index}_type`] ? 'border-red-500 focus:ring-red-500/50' : ''
-                        }`}
-                        placeholder="e.g., Blazer, Pant, Shirt"
-                      />
-                      {errors[`item_${index}_type`] && (
-                        <p className="mt-1 text-sm text-red-600">{errors[`item_${index}_type`]}</p>
-                      )}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Quantity *
-                      </label>
-                      <input
-                        type="number"
-                        min="1"
-                        value={item.quantity}
-                        onChange={(e) => handleItemChange(index, 'quantity', parseInt(e.target.value) || 1)}
-                        className={`w-full px-3 py-2 border rounded-lg ${
-                          errors[`item_${index}_quantity`] ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                      />
-                      {errors[`item_${index}_quantity`] && (
-                        <p className="mt-1 text-sm text-red-600">{errors[`item_${index}_quantity`]}</p>
-                      )}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Price (BDT) *
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={item.price}
-                        onChange={(e) => handleItemChange(index, 'price', parseFloat(e.target.value) || 0)}
-                        className={`w-full px-3 py-2 border rounded-lg ${
-                          errors[`item_${index}_price`] ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                      />
-                      {errors[`item_${index}_price`] && (
-                        <p className="mt-1 text-sm text-red-600">{errors[`item_${index}_price`]}</p>
-                      )}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Fabric Details
-                      </label>
-                      <input
-                        type="text"
-                        value={item.fabric_details}
-                        onChange={(e) => handleItemChange(index, 'fabric_details', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                        placeholder="Fabric description"
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
 
               <div className="mt-6 p-5 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-200/50 shadow-sm">
                 <div className="flex justify-between items-center">

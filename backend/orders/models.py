@@ -34,6 +34,7 @@ class OrderItem(models.Model):
     quantity = models.IntegerField(default=1, validators=[MinValueValidator(1)])
     price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
     fabric_details = models.TextField(blank=True, null=True)
+    measurement = models.ForeignKey('measurements.Measurement', on_delete=models.SET_NULL, null=True, blank=True, related_name='order_items')
 
     class Meta:
         db_table = 'order_items'

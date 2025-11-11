@@ -396,6 +396,7 @@ export interface OrderItem {
   quantity: number;
   price: number;
   fabric_details?: string;
+  measurement_id?: number;
 }
 
 export interface OrderItemCreate {
@@ -403,6 +404,7 @@ export interface OrderItemCreate {
   quantity: number;
   price: number;
   fabric_details?: string;
+  measurement_id?: number;
 }
 
 export interface Order {
