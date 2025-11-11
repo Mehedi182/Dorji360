@@ -347,7 +347,7 @@ export interface MeasurementTemplate {
   id: number;
   garment_type: string;
   gender: 'male' | 'female' | 'unisex';
-  fields_json: Record<string, string>; // field_name -> display_name
+  fields_json: Record<string, string | string[]>; // field_name -> display_name, or _order -> string[]
   display_name: string;
   created_at: string;
 }

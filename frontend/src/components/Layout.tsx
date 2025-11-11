@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 interface LayoutProps {
@@ -7,7 +7,24 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   const location = useLocation();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Close sidebar on mobile when route changes
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
+
+  // Handle window resize - auto-collapse on small screens
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        setSidebarCollapsed(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const navItems = [
     { path: '/customers', label: 'Customers', icon: '👥' },
@@ -21,105 +38,138 @@ export default function Layout({ children }: LayoutProps) {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Combined Header & Navigation */}
-      <header className="bg-white sticky top-0 z-40 shadow-sm border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo & Brand */}
-            <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
-              <img 
-                src="/logo.png?v=2"
-                alt="Dorji360 Logo" 
-                className="h-8 sm:h-12 w-auto object-contain"
-                key="logo"
-              />
+    <div className="min-h-screen bg-gray-50">
+      {/* Sidebar */}
+      <aside
+        className={`
+          fixed inset-y-0 left-0 z-50
+          bg-white border-r border-border shadow-lg lg:shadow-sm
+          transition-all duration-300 ease-in-out
+          flex flex-col
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+          ${sidebarCollapsed ? 'lg:w-20' : 'w-64'}
+        `}
+      >
+        {/* Logo & Brand */}
+        <div className="h-16 flex items-center justify-between px-4 border-b border-border flex-shrink-0">
+          <div className={`flex items-center space-x-3 ${sidebarCollapsed ? 'justify-center w-full' : ''}`}>
+            <img 
+              src="/logo.png?v=2"
+              alt="Dorji360 Logo" 
+              className="h-8 w-auto object-contain"
+              key="logo"
+            />
+            {!sidebarCollapsed && (
               <div>
-                <h1 className="text-lg sm:text-xl font-bold text-primary">
-                  Dorji360
-                </h1>
-                <p className="text-xs text-text-secondary hidden sm:block">Professional Tailoring Management</p>
+                <h1 className="text-lg font-bold text-primary">Dorji360</h1>
+                <p className="text-xs text-text-secondary">Professional Tailoring</p>
               </div>
-            </div>
+            )}
+          </div>
+          {/* Collapse button - desktop only */}
+          <button
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className="hidden lg:flex p-1.5 rounded-lg text-text-secondary hover:text-text-primary hover:bg-gray-50 transition-colors"
+            aria-label="Toggle sidebar"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {sidebarCollapsed ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              )}
+            </svg>
+          </button>
+        </div>
 
-            {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center space-x-1">
-              {navItems.map((item) => {
-                const isActive = location.pathname === item.path;
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={`px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 whitespace-nowrap ${
+        {/* Navigation */}
+        <nav className="flex-1 py-4 px-2 overflow-y-auto min-h-0">
+          <div className="space-y-1">
+            {navItems.map((item) => {
+              const isActive = location.pathname === item.path;
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`
+                    flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200
+                    ${sidebarCollapsed ? 'justify-center' : ''}
+                    ${
                       isActive
                         ? 'bg-primary text-white shadow-sm'
                         : 'text-text-secondary hover:text-text-primary hover:bg-gray-50'
-                    }`}
-                  >
-                    <span className="mr-1.5 text-base">{item.icon}</span>
-                    <span>{item.label}</span>
-                  </Link>
-                );
-              })}
-            </nav>
+                    }
+                  `}
+                  title={sidebarCollapsed ? item.label : ''}
+                >
+                  <span className="text-lg">{item.icon}</span>
+                  {!sidebarCollapsed && (
+                    <span className="ml-3">{item.label}</span>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        </nav>
 
-            {/* Mobile Menu Button */}
+        {/* Footer in Sidebar */}
+        {!sidebarCollapsed && (
+          <div className="p-4 border-t border-border flex-shrink-0">
+            <div className="text-center text-xs text-text-secondary">
+              <p>© {new Date().getFullYear()} Dorji360</p>
+            </div>
+          </div>
+        )}
+      </aside>
+
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Main Content Area */}
+      <div className={`flex flex-col min-h-screen transition-all duration-300 ${sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'}`}>
+        {/* Top Header Bar - Mobile */}
+        <header className="lg:hidden bg-white sticky top-0 z-30 shadow-sm border-b border-border">
+          <div className="flex items-center justify-between h-16 px-4">
             <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-gray-50 transition-colors"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-gray-50 transition-colors"
               aria-label="Toggle menu"
             >
-              {mobileMenuOpen ? (
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              ) : (
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              )}
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
             </button>
-          </div>
-
-          {/* Mobile Navigation */}
-          {mobileMenuOpen && (
-            <div className="lg:hidden py-4 border-t border-border animate-slideDown">
-              <nav className="grid grid-cols-2 gap-2">
-                {navItems.map((item) => {
-                  const isActive = location.pathname === item.path;
-                  return (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={`px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 text-center ${
-                        isActive
-                          ? 'bg-primary text-white shadow-sm'
-                          : 'text-text-secondary hover:text-text-primary hover:bg-gray-50'
-                      }`}
-                    >
-                      <span className="mr-2 text-base">{item.icon}</span>
-                      <span>{item.label}</span>
-                    </Link>
-                  );
-                })}
-              </nav>
+            <div className="flex items-center space-x-2">
+              <img 
+                src="/logo.png?v=2"
+                alt="Dorji360 Logo" 
+                className="h-8 w-auto object-contain"
+              />
+              <h1 className="text-lg font-bold text-primary">Dorji360</h1>
             </div>
-          )}
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="flex-1 pb-8">{children}</main>
-
-      {/* Footer with Copyright */}
-      <footer className="mt-auto py-4 border-t border-border bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center text-sm text-text-secondary">
-            <p>© {new Date().getFullYear()} Dorji360. All rights reserved.</p>
+            <div className="w-10" /> {/* Spacer for centering */}
           </div>
-        </div>
-      </footer>
+        </header>
+
+        {/* Main Content */}
+        <main className="flex-1 pb-8 px-4 sm:px-6 lg:px-8 pt-4 lg:pt-8">
+          {children}
+        </main>
+
+        {/* Footer - Desktop only (mobile footer is in sidebar) */}
+        <footer className="hidden lg:block mt-auto py-4 border-t border-border bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center text-sm text-text-secondary">
+              <p>© {new Date().getFullYear()} Dorji360. All rights reserved.</p>
+            </div>
+          </div>
+        </footer>
+      </div>
     </div>
   );
 }

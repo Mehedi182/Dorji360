@@ -16,7 +16,9 @@ interface MeasurementState {
   loading: boolean;
   error: string | null;
   selectedMeasurement: MeasurementWithCustomer | null;
+  selectedTemplate: MeasurementTemplate | null;
   fetchTemplates: (garmentType?: string, gender?: string) => Promise<void>;
+  fetchTemplate: (id: number) => Promise<void>;
   fetchMeasurements: (customerId?: number, garmentType?: string) => Promise<void>;
   fetchMeasurement: (id: number) => Promise<void>;
   createMeasurement: (measurement: MeasurementCreate) => Promise<void>;

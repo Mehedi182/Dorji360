@@ -9,7 +9,6 @@ interface TemplateFormProps {
 
 export default function TemplateForm({ templateId, onClose }: TemplateFormProps) {
   const {
-    templates,
     loading,
     fetchTemplates,
     selectedTemplate,
@@ -27,6 +26,7 @@ export default function TemplateForm({ templateId, onClose }: TemplateFormProps)
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [newFieldKey, setNewFieldKey] = useState('');
   const [newFieldLabel, setNewFieldLabel] = useState('');
+  const [reorderMode, setReorderMode] = useState(false);
 
   useEffect(() => {
     fetchTemplates();
@@ -38,15 +38,46 @@ export default function TemplateForm({ templateId, onClose }: TemplateFormProps)
 
   useEffect(() => {
     if (selectedTemplate && templateId && selectedTemplate.id === templateId) {
+      const fieldsJson = selectedTemplate.fields_json;
+      // Check if _order exists in fields_json
+      const fieldOrder = (fieldsJson as any)._order as string[] | undefined;
+      
+      let fields: Array<{ key: string; label: string }>;
+      if (fieldOrder && Array.isArray(fieldOrder)) {
+        // Use the order from _order array
+        fields = fieldOrder
+          .filter(key => key !== '_order' && fieldsJson[key])
+          .map(key => ({
+            key,
+            label: fieldsJson[key] as string,
+          }));
+        // Add any fields that are in fields_json but not in _order
+        const orderedKeys = new Set(fieldOrder);
+        Object.keys(fieldsJson).forEach(key => {
+          if (key !== '_order' && !orderedKeys.has(key)) {
+            fields.push({
+              key,
+              label: fieldsJson[key] as string,
+            });
+          }
+        });
+      } else {
+        // Backward compatibility: use keys order
+        fields = Object.entries(fieldsJson)
+          .filter(([key]) => key !== '_order')
+          .map(([key, label]) => ({
+            key,
+            label: label as string,
+          }));
+      }
+      
       setFormData({
         garment_type: selectedTemplate.garment_type,
         gender: selectedTemplate.gender,
         display_name: selectedTemplate.display_name,
-        fields: Object.entries(selectedTemplate.fields_json).map(([key, label]) => ({
-          key,
-          label,
-        })),
+        fields,
       });
+      setReorderMode(false); // Reset reorder mode when loading template
     }
   }, [selectedTemplate, templateId]);
 
@@ -78,6 +109,16 @@ export default function TemplateForm({ templateId, onClose }: TemplateFormProps)
     });
   };
 
+  const handleMoveField = (index: number, direction: 'up' | 'down') => {
+    const newFields = [...formData.fields];
+    if (direction === 'up' && index > 0) {
+      [newFields[index - 1], newFields[index]] = [newFields[index], newFields[index - 1]];
+    } else if (direction === 'down' && index < newFields.length - 1) {
+      [newFields[index], newFields[index + 1]] = [newFields[index + 1], newFields[index]];
+    }
+    setFormData({ ...formData, fields: newFields });
+  };
+
   const handleFieldChange = (index: number, field: 'key' | 'label', value: string) => {
     const newFields = [...formData.fields];
     newFields[index] = { ...newFields[index], [field]: value };
@@ -103,18 +144,27 @@ export default function TemplateForm({ templateId, onClose }: TemplateFormProps)
     e.preventDefault();
     if (!validate()) return;
 
-    try {
-      const fieldsJson: Record<string, string> = {};
+      try {
+      const fieldsJson: Record<string, string | string[]> = {};
+      const fieldOrder: string[] = [];
+      
       formData.fields.forEach((field) => {
         fieldsJson[field.key] = field.label;
+        fieldOrder.push(field.key);
       });
+      
+      // Add _order array to fields_json
+      fieldsJson._order = fieldOrder;
+
+      // Cast to Record<string, string> for API (backend will store as JSON anyway)
+      const fieldsJsonForApi = fieldsJson as unknown as Record<string, string>;
 
       if (templateId) {
         const updateData: MeasurementTemplateUpdate = {
           garment_type: formData.garment_type,
           gender: formData.gender,
           display_name: formData.display_name,
-          fields_json: fieldsJson,
+          fields_json: fieldsJsonForApi,
         };
         await updateTemplate(templateId, updateData);
       } else {
@@ -122,7 +172,7 @@ export default function TemplateForm({ templateId, onClose }: TemplateFormProps)
           garment_type: formData.garment_type,
           gender: formData.gender,
           display_name: formData.display_name,
-          fields_json: fieldsJson,
+          fields_json: fieldsJsonForApi,
         };
         await createTemplate(createData);
       }
@@ -209,12 +259,50 @@ export default function TemplateForm({ templateId, onClose }: TemplateFormProps)
 
             {/* Measurement Fields */}
             <div className="border-t pt-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Measurement Fields</h3>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Measurement Fields</h3>
+                {formData.fields.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setReorderMode(!reorderMode)}
+                    className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    {reorderMode ? 'Done Reordering' : 'Reorder Fields'}
+                  </button>
+                )}
+              </div>
               {errors.fields && <p className="mb-2 text-sm text-red-600">{errors.fields}</p>}
 
               {/* Existing Fields */}
               {formData.fields.map((field, index) => (
-                <div key={index} className="flex gap-2 mb-2">
+                <div key={index} className="flex gap-2 mb-2 items-center">
+                  {/* Reorder buttons - only show in reorder mode */}
+                  {reorderMode && (
+                    <div className="flex flex-col gap-1">
+                      <button
+                        type="button"
+                        onClick={() => handleMoveField(index, 'up')}
+                        disabled={index === 0}
+                        className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                        title="Move up"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleMoveField(index, 'down')}
+                        disabled={index === formData.fields.length - 1}
+                        className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                        title="Move down"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
                   <input
                     type="text"
                     value={field.key}

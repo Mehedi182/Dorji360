@@ -99,10 +99,11 @@ export default function MeasurementForm({ measurementId, customerId, onClose }: 
     }
     if (selectedTemplate) {
       // Check if all required fields are filled
-      const requiredFields = Object.keys(selectedTemplate.fields_json);
+      const fieldsJson = selectedTemplate.fields_json;
+      const requiredFields = Object.keys(fieldsJson).filter(key => key !== '_order');
       for (const field of requiredFields) {
         if (!measurements[field] || measurements[field] <= 0) {
-          newErrors[field] = `${selectedTemplate.fields_json[field]} is required`;
+          newErrors[field] = `${fieldsJson[field]} is required`;
         }
       }
     }
@@ -201,38 +202,64 @@ export default function MeasurementForm({ measurementId, customerId, onClose }: 
             </div>
 
             {/* Dynamic Measurement Fields */}
-            {selectedTemplate && (
-              <div className="border-t pt-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Measurements ({selectedTemplate.display_name})
-                </h3>
-                <div className="grid grid-cols-2 gap-4">
-                  {Object.entries(selectedTemplate.fields_json).map(([field, displayName]) => (
-                    <div key={field}>
-                      <label
-                        htmlFor={field}
-                        className="block text-sm font-medium text-gray-700 mb-1"
-                      >
-                        {displayName} (cm) *
-                      </label>
-                      <input
-                        type="number"
-                        id={field}
-                        step="0.1"
-                        min="0"
-                        value={measurements[field] || ''}
-                        onChange={(e) => handleMeasurementChange(field, e.target.value)}
-                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                          errors[field] ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                        placeholder="0.0"
-                      />
-                      {errors[field] && <p className="mt-1 text-sm text-red-600">{errors[field]}</p>}
-                    </div>
-                  ))}
+            {selectedTemplate && (() => {
+              const fieldsJson = selectedTemplate.fields_json;
+              // Check if _order exists in fields_json
+              const fieldOrder = (fieldsJson as any)._order as string[] | undefined;
+              
+              // Get ordered fields
+              let orderedFields: Array<[string, string]>;
+              if (fieldOrder && Array.isArray(fieldOrder)) {
+                // Use the order from _order array
+                orderedFields = fieldOrder
+                  .filter(key => key !== '_order' && fieldsJson[key])
+                  .map(key => [key, fieldsJson[key] as string]);
+                // Add any fields that are in fields_json but not in _order
+                const orderedKeys = new Set(fieldOrder);
+                Object.entries(fieldsJson).forEach(([key, value]) => {
+                  if (key !== '_order' && !orderedKeys.has(key)) {
+                    orderedFields.push([key, value as string]);
+                  }
+                });
+              } else {
+                // Backward compatibility: use keys order
+                orderedFields = Object.entries(fieldsJson)
+                  .filter(([key]) => key !== '_order');
+              }
+              
+              return (
+                <div className="border-t pt-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    Measurements ({selectedTemplate.display_name})
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    {orderedFields.map(([field, displayName]) => (
+                      <div key={field}>
+                        <label
+                          htmlFor={field}
+                          className="block text-sm font-medium text-gray-700 mb-1"
+                        >
+                          {displayName} (cm) *
+                        </label>
+                        <input
+                          type="number"
+                          id={field}
+                          step="0.1"
+                          min="0"
+                          value={measurements[field] || ''}
+                          onChange={(e) => handleMeasurementChange(field, e.target.value)}
+                          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                            errors[field] ? 'border-red-500' : 'border-gray-300'
+                          }`}
+                          placeholder="0.0"
+                        />
+                        {errors[field] && <p className="mt-1 text-sm text-red-600">{errors[field]}</p>}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             <div className="flex gap-3 pt-4">
               <button
