@@ -132,166 +132,173 @@ export default function OrderDetail({ order, onClose, onEdit }: OrderDetailProps
 
             {/* Printable Content */}
             <div ref={printRef} className="print:p-8">
-              <div className="mb-6 print:mb-8">
-                <h3 className="text-xl font-bold text-gray-900 mb-2 print:text-2xl">Order Receipt</h3>
-                <div className="text-sm text-gray-500 print:text-base">
-                  Order Date: {new Date(displayOrder.order_date).toLocaleDateString()}
+              {/* Professional Card Container */}
+              <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4 print:shadow-none print:border-0 print:p-0">
+                <div className="mb-4 print:mb-6">
+                  <h3 className="text-lg font-bold text-gray-900 mb-1 print:text-xl">Order Receipt</h3>
                 </div>
-              </div>
 
-              <div className="space-y-4 print:space-y-6">
-                {/* Customer Info */}
-                <div className="border-b pb-4 print:pb-6">
-                  <h4 className="text-sm font-medium text-gray-500 mb-2 print:text-base">Customer Information</h4>
-                  <div className="grid grid-cols-2 gap-4 print:gap-6">
-                    <div>
-                      <p className="text-sm text-gray-500 print:text-base">Name</p>
-                      <p className="text-lg font-semibold text-gray-900 print:text-xl">{displayOrder.customer_name}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500 print:text-base">Phone</p>
-                      <p className="text-lg font-semibold text-gray-900 print:text-xl">{displayOrder.customer_phone}</p>
+                <div className="space-y-4 print:space-y-4">
+                  {/* Customer Info */}
+                  <div className="border-b border-gray-100 pb-3 print:pb-3">
+                    <h4 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2 print:text-xs">Customer Information</h4>
+                    <div className="grid grid-cols-2 gap-4 print:gap-4">
+                      <div>
+                        <p className="text-xs text-gray-400 mb-0.5 print:text-xs">Name</p>
+                        <p className="text-base font-bold text-gray-900 print:text-lg">{displayOrder.customer_name}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-400 mb-0.5 print:text-xs">Phone</p>
+                        <p className="text-base font-bold text-gray-900 print:text-lg">{displayOrder.customer_phone}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Order Info */}
-                <div className="border-b pb-4 print:pb-6">
-                  <div className="grid grid-cols-2 gap-4 print:gap-6">
-                    <div>
-                      <p className="text-sm text-gray-500 print:text-base">Order ID</p>
-                      <p className="text-lg font-semibold text-gray-900 print:text-xl">#{displayOrder.id}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500 print:text-base mb-2">Status</p>
-                      <select
-                        value={currentStatus}
-                        onChange={(e) => handleStatusChange(e.target.value)}
-                        className={`px-3 py-1 text-sm font-medium rounded-lg border-0 ${getStatusColor(currentStatus)} print:hidden`}
-                      >
-                        <option value="pending">Pending</option>
-                        <option value="cutting">Cutting</option>
-                        <option value="sewing">Sewing</option>
-                        <option value="ready">Ready</option>
-                        <option value="delivered">Delivered</option>
-                      </select>
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(currentStatus)} hidden print:inline`}>
-                        {currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1)}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500 print:text-base">Delivery Date</p>
-                      <p className="text-lg font-semibold text-gray-900 print:text-xl">
-                        {new Date(displayOrder.delivery_date).toLocaleDateString()}
-                      </p>
+                  {/* Order Info */}
+                  <div className="border-b border-gray-100 pb-3 print:pb-3">
+                    <h4 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2 print:text-xs">Order Information</h4>
+                    <div className="grid grid-cols-4 gap-3 print:gap-3">
+                      <div>
+                        <p className="text-xs text-gray-400 mb-0.5 print:text-xs">Order ID</p>
+                        <p className="text-base font-bold text-gray-900 print:text-lg">#{displayOrder.id}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-400 mb-0.5 print:text-xs">Order Date</p>
+                        <p className="text-base font-bold text-gray-900 print:text-lg">
+                          {new Date(displayOrder.order_date).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-400 mb-0.5 print:text-xs">Delivery Date</p>
+                        <p className="text-base font-bold text-gray-900 print:text-lg">
+                          {new Date(displayOrder.delivery_date).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-400 mb-1 print:text-xs">Status</p>
+                        <select
+                          value={currentStatus}
+                          onChange={(e) => handleStatusChange(e.target.value)}
+                          className={`px-2 py-1 text-xs font-semibold rounded-full border-0 ${getStatusColor(currentStatus)} print:hidden`}
+                        >
+                          <option value="pending">Pending</option>
+                          <option value="cutting">Cutting</option>
+                          <option value="sewing">Sewing</option>
+                          <option value="ready">Ready</option>
+                          <option value="delivered">Delivered</option>
+                        </select>
+                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(currentStatus)} hidden print:inline-block`}>
+                          {currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1)}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Order Items */}
-                <div className="border-b pb-4 print:pb-6">
-                  <h4 className="text-sm font-medium text-gray-500 mb-4 print:text-base print:mb-6">Order Items</h4>
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full">
-                      <thead className="bg-gray-50 print:bg-transparent">
-                        <tr>
-                          <th className="px-4 py-2 text-left text-sm font-medium text-gray-700 print:text-base">
-                            Garment Type
-                          </th>
-                          <th className="px-4 py-2 text-left text-sm font-medium text-gray-700 print:text-base">
-                            Quantity
-                          </th>
-                          <th className="px-4 py-2 text-left text-sm font-medium text-gray-700 print:text-base">
-                            Price
-                          </th>
-                          <th className="px-4 py-2 text-left text-sm font-medium text-gray-700 print:text-base">
-                            Subtotal
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {displayOrder.items.map((item, index) => (
-                          <tr key={index} className="border-b">
-                            <td className="px-4 py-2 text-sm print:text-base">
-                              {item.garment_type}
-                              {item.fabric_details && (
-                                <div className="text-xs text-gray-500 print:text-sm">({item.fabric_details})</div>
-                              )}
-                            </td>
-                            <td className="px-4 py-2 text-sm print:text-base">{item.quantity}</td>
-                            <td className="px-4 py-2 text-sm print:text-base">৳{item.price.toFixed(2)}</td>
-                            <td className="px-4 py-2 text-sm font-medium print:text-base">
-                              ৳{(item.price * item.quantity).toFixed(2)}
-                            </td>
+                  {/* Order Items */}
+                  <div className="border-b border-gray-100 pb-3 print:pb-3">
+                    <h4 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2 print:text-xs">Order Items</h4>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full">
+                        <thead className="bg-gray-50 print:bg-transparent">
+                          <tr>
+                            <th className="px-2 py-1.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wide print:text-xs">
+                              Garment Type
+                            </th>
+                            <th className="px-2 py-1.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wide print:text-xs">
+                              Qty
+                            </th>
+                            <th className="px-2 py-1.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wide print:text-xs">
+                              Price
+                            </th>
+                            <th className="px-2 py-1.5 text-left text-xs font-medium text-gray-400 uppercase tracking-wide print:text-xs">
+                              Subtotal
+                            </th>
                           </tr>
+                        </thead>
+                        <tbody>
+                          {displayOrder.items.map((item, index) => (
+                            <tr key={index} className="border-b border-gray-100">
+                              <td className="px-2 py-1.5 text-sm font-semibold text-gray-900 print:text-sm">
+                                {item.garment_type}
+                                {item.fabric_details && (
+                                  <div className="text-xs text-gray-500 font-normal print:text-xs mt-0.5">({item.fabric_details})</div>
+                                )}
+                              </td>
+                              <td className="px-2 py-1.5 text-sm font-semibold text-gray-900 print:text-sm">{item.quantity}</td>
+                              <td className="px-2 py-1.5 text-sm font-semibold text-gray-900 print:text-sm">৳{item.price.toFixed(2)}</td>
+                              <td className="px-2 py-1.5 text-sm font-bold text-gray-900 print:text-sm">
+                                ৳{(item.price * item.quantity).toFixed(2)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                        <tfoot>
+                          <tr className="border-t-2 border-gray-200">
+                            <td colSpan={3} className="px-2 py-1.5 text-right text-xs font-medium text-gray-400 print:text-sm">
+                              Total:
+                            </td>
+                            <td className="px-2 py-1.5 text-base font-bold text-gray-900 print:text-lg">৳{displayOrder.total_amount.toFixed(2)}</td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Payment Summary */}
+                  <div className="border-b border-gray-100 pb-3 print:pb-3">
+                    <h4 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2 print:text-xs">Payment Summary</h4>
+                    <div className="grid grid-cols-2 gap-4 print:gap-4">
+                      <div>
+                        <p className="text-xs text-gray-400 mb-0.5 print:text-xs">Paid Amount</p>
+                        <p className="text-lg font-bold text-green-600 print:text-xl">
+                          ৳{displayOrder.paid_amount.toFixed(2)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-400 mb-0.5 print:text-xs">Remaining Amount</p>
+                        <p className="text-lg font-bold text-red-600 print:text-xl">
+                          ৳{displayOrder.remaining_amount.toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Assigned Staff */}
+                  {displayOrder.assigned_staff && displayOrder.assigned_staff.length > 0 && (
+                    <div className="border-b border-gray-100 pb-3 print:pb-3">
+                      <h4 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2 print:text-xs">Assigned Staff</h4>
+                      <div className="space-y-1 print:space-y-1">
+                        {displayOrder.assigned_staff.map((assignment) => (
+                          <div key={assignment.id} className="flex justify-between items-center p-1.5 bg-gray-50 rounded print:bg-transparent print:p-0.5">
+                            <div>
+                              <span className="font-semibold text-xs text-gray-900 print:text-sm">{assignment.staff_name}</span>
+                              <span className="text-xs text-gray-400 ml-1 print:text-xs">({getRoleLabel(assignment.staff_role)})</span>
+                              {assignment.notes && (
+                                <div className="text-xs text-gray-500 print:text-xs mt-0.5">{assignment.notes}</div>
+                              )}
+                            </div>
+                            <button
+                              onClick={() => handleRemoveStaff(assignment.id)}
+                              className="text-red-600 hover:text-red-700 p-0.5 hover:bg-red-50 rounded print:hidden"
+                              title="Remove staff"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
                         ))}
-                      </tbody>
-                            <tfoot>
-                              <tr className="font-bold">
-                                <td colSpan={3} className="px-4 py-2 text-right text-sm print:text-base">
-                                  Total:
-                                </td>
-                                <td className="px-4 py-2 text-sm print:text-base">৳{displayOrder.total_amount.toFixed(2)}</td>
-                              </tr>
-                            </tfoot>
-                          </table>
-                        </div>
                       </div>
+                    </div>
+                  )}
 
-                      {/* Payment Summary */}
-                      <div className="border-b pb-4 print:pb-6">
-                        <h4 className="text-sm font-medium text-gray-500 mb-2 print:text-base">Payment Summary</h4>
-                        <div className="grid grid-cols-2 gap-4 print:gap-6">
-                          <div>
-                            <p className="text-sm text-gray-500 print:text-base">Paid Amount</p>
-                            <p className="text-lg font-semibold text-green-600 print:text-xl">
-                              ৳{displayOrder.paid_amount.toFixed(2)}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-gray-500 print:text-base">Remaining Amount</p>
-                            <p className="text-lg font-semibold text-red-600 print:text-xl">
-                              ৳{displayOrder.remaining_amount.toFixed(2)}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Assigned Staff */}
-                      {displayOrder.assigned_staff && displayOrder.assigned_staff.length > 0 && (
-                        <div className="border-b pb-4 print:pb-6 print:border-b">
-                          <h4 className="text-sm font-medium text-gray-500 mb-2 print:text-base">Assigned Staff</h4>
-                          <div className="space-y-2 print:space-y-1">
-                            {displayOrder.assigned_staff.map((assignment) => (
-                              <div key={assignment.id} className="flex justify-between items-center p-2 bg-gray-50 rounded-lg print:bg-transparent print:p-1">
-                                <div>
-                                  <span className="font-medium text-sm print:text-base">{assignment.staff_name}</span>
-                                  <span className="text-xs text-gray-500 ml-2 print:text-sm">({getRoleLabel(assignment.staff_role)})</span>
-                                  {assignment.notes && (
-                                    <div className="text-xs text-gray-500 print:text-sm">{assignment.notes}</div>
-                                  )}
-                                </div>
-                                <button
-                                  onClick={() => handleRemoveStaff(assignment.id)}
-                                  className="text-red-600 hover:text-red-700 p-1 hover:bg-red-50 rounded-lg print:hidden"
-                                  title="Remove staff"
-                                >
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                  </svg>
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {displayOrder.notes && (
-                        <div>
-                          <h4 className="text-sm font-medium text-gray-500 mb-2 print:text-base">Notes</h4>
-                          <p className="text-sm text-gray-900 print:text-base">{displayOrder.notes}</p>
-                        </div>
-                      )}
+                  {displayOrder.notes && (
+                    <div>
+                      <h4 className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1 print:text-xs">Notes</h4>
+                      <p className="text-xs font-medium text-gray-900 print:text-sm">{displayOrder.notes}</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
