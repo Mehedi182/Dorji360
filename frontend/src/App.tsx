@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import ToastContainer from './components/ToastContainer';
+import Dashboard from './pages/Dashboard';
 import Customers from './pages/Customers';
 import Measurements from './pages/Measurements';
 import Templates from './pages/Templates';
@@ -15,7 +16,8 @@ function App() {
     <Router>
       <Layout>
         <Routes>
-          <Route path="/" element={<Navigate to="/customers" replace />} />
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/customers" element={<Customers />} />
           <Route path="/measurements" element={<Measurements />} />
           <Route path="/templates" element={<Templates />} />
