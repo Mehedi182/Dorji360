@@ -26,15 +26,67 @@ export default function Layout({ children }: LayoutProps) {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Icon components - Modern filled style
+  const CustomersIcon = ({ className }: { className?: string }) => (
+    <svg className={className} fill="currentColor" viewBox="0 0 20 20">
+      <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+    </svg>
+  );
+
+  const MeasurementsIcon = ({ className }: { className?: string }) => (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16M4 4h16" />
+    </svg>
+  );
+
+  const TemplatesIcon = ({ className }: { className?: string }) => (
+    <svg className={className} fill="currentColor" viewBox="0 0 20 20">
+      <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+    </svg>
+  );
+
+  const SamplesIcon = ({ className }: { className?: string }) => (
+    <svg className={className} fill="currentColor" viewBox="0 0 20 20">
+      <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+    </svg>
+  );
+
+  const OrdersIcon = ({ className }: { className?: string }) => (
+    <svg className={className} fill="currentColor" viewBox="0 0 20 20">
+      <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+      <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
+    </svg>
+  );
+
+  const StaffIcon = ({ className }: { className?: string }) => (
+    <svg className={className} fill="currentColor" viewBox="0 0 20 20">
+      <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
+    </svg>
+  );
+
+  const PaymentsIcon = ({ className }: { className?: string }) => (
+    <svg className={className} fill="currentColor" viewBox="0 0 20 20">
+      <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
+      <path fillRule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clipRule="evenodd" />
+    </svg>
+  );
+
+  const DeliveriesIcon = ({ className }: { className?: string }) => (
+    <svg className={className} fill="currentColor" viewBox="0 0 20 20">
+      <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+      <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1v-5a1 1 0 00-.293-.707l-2-2A1 1 0 0015 7h-1z" />
+    </svg>
+  );
+
   const navItems = [
-    { path: '/customers', label: 'Customers', icon: '👥' },
-    { path: '/measurements', label: 'Measurements', icon: '📏' },
-    { path: '/templates', label: 'Templates', icon: '📐' },
-    { path: '/samples', label: 'Samples', icon: '🖼️' },
-    { path: '/orders', label: 'Orders', icon: '📋' },
-    { path: '/staff', label: 'Staff', icon: '👔' },
-    { path: '/payments', label: 'Payments', icon: '💰' },
-    { path: '/deliveries', label: 'Deliveries', icon: '📅' },
+    { path: '/customers', label: 'Customers', icon: CustomersIcon },
+    { path: '/measurements', label: 'Measurements', icon: MeasurementsIcon },
+    { path: '/templates', label: 'Templates', icon: TemplatesIcon },
+    { path: '/samples', label: 'Samples', icon: SamplesIcon },
+    { path: '/orders', label: 'Orders', icon: OrdersIcon },
+    { path: '/staff', label: 'Staff', icon: StaffIcon },
+    { path: '/payments', label: 'Payments', icon: PaymentsIcon },
+    { path: '/deliveries', label: 'Deliveries', icon: DeliveriesIcon },
   ];
 
   return (
@@ -102,7 +154,7 @@ export default function Layout({ children }: LayoutProps) {
                   `}
                   title={sidebarCollapsed ? item.label : ''}
                 >
-                  <span className="text-lg">{item.icon}</span>
+                  <item.icon className="w-5 h-5 flex-shrink-0" />
                   {!sidebarCollapsed && (
                     <span className="ml-3">{item.label}</span>
                   )}
