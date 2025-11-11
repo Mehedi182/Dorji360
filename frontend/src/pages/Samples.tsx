@@ -282,11 +282,6 @@ export default function Samples() {
           )}
         </div>
 
-        {/* Sample Form Modal */}
-        {showForm && (
-          <SampleForm onClose={handleFormClose} />
-        )}
-
         {/* Image Modal */}
         {selectedImage && selectedImage.images.length > 0 && (
           <ImageModal

@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useSampleStore } from '../store/sampleStore';
+import { useToastStore } from '../store/toastStore';
 
 interface SampleFormProps {
   sampleId?: number | null;
@@ -21,6 +22,7 @@ const GARMENT_TYPES = [
 
 export default function SampleForm({ sampleId, garmentType, onClose }: SampleFormProps) {
   const { createSample, updateSample, fetchSample, loading, selectedSample } = useSampleStore();
+  const { showToast } = useToastStore();
   const [formData, setFormData] = useState({
     garment_type: garmentType || '',
     title: '',
@@ -29,74 +31,203 @@ export default function SampleForm({ sampleId, garmentType, onClose }: SampleFor
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [uploadMethod, setUploadMethod] = useState<'url' | 'upload'>('upload');
+  const prevSampleIdRef = useRef<number | null | undefined>(sampleId);
+  const isInitializedRef = useRef(false);
+  const hasImagesRef = useRef(false);
 
+  // Debug: Log formData changes and track if images exist
   useEffect(() => {
-    if (sampleId && selectedSample?.id === sampleId) {
+    console.log('formData.images changed:', formData.images.length, 'images');
+    hasImagesRef.current = formData.images.length > 0;
+  }, [formData.images]);
+
+  // Handle editing existing sample - ONLY run when sampleId exists
+  useEffect(() => {
+    if (!sampleId) {
+      // Don't run this effect when creating new sample
+      return;
+    }
+    
+    if (selectedSample?.id === sampleId) {
       setFormData({
         garment_type: selectedSample.garment_type,
         title: selectedSample.title,
         description: selectedSample.description || '',
         images: selectedSample.images.map(img => img.image_url),
       });
-    } else if (sampleId) {
+      isInitializedRef.current = true;
+    } else {
+      // Fetch sample if we don't have it yet
       fetchSample(sampleId);
-    } else if (!sampleId) {
-      // Reset form when creating new sample
-      setFormData({
-        garment_type: garmentType || '',
-        title: '',
-        description: '',
-        images: [],
-      });
-      setUploadMethod('upload');
     }
-  }, [sampleId, selectedSample, garmentType, fetchSample]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sampleId, selectedSample?.id === sampleId ? selectedSample : null]);
 
+  // Handle creating new sample - only run when sampleId changes
   useEffect(() => {
-    if (sampleId && selectedSample?.id === sampleId) {
-      setFormData({
-        garment_type: selectedSample.garment_type,
-        title: selectedSample.title,
-        description: selectedSample.description || '',
-        images: selectedSample.images.map(img => img.image_url),
+    if (!sampleId) {
+      // Only reset if sampleId changed from a number to null/undefined (transitioning from edit to create)
+      // OR if this is the very first render (!isInitializedRef.current)
+      const sampleIdChanged = prevSampleIdRef.current !== sampleId;
+      const wasEditing = typeof prevSampleIdRef.current === 'number';
+      
+      console.log('Create sample effect:', {
+        sampleIdChanged,
+        wasEditing,
+        isInitialized: isInitializedRef.current,
+        prevSampleId: prevSampleIdRef.current,
+        currentSampleId: sampleId,
+        hasImages: hasImagesRef.current
       });
+      
+      // CRITICAL: Never reset if form already has images (user has uploaded files)
+      if (hasImagesRef.current) {
+        console.log('SKIPPING reset - form has images!');
+        isInitializedRef.current = true;
+        prevSampleIdRef.current = sampleId;
+        return;
+      }
+      
+      // Only reset if:
+      // 1. Transitioning from editing to creating (wasEditing && sampleIdChanged)
+      // 2. OR first time opening the form (!isInitializedRef.current)
+      if ((sampleIdChanged && wasEditing) || !isInitializedRef.current) {
+        console.log('Resetting form');
+        // Reset form only when transitioning from edit to create, or on first mount
+        setFormData({
+          garment_type: garmentType || '',
+          title: '',
+          description: '',
+          images: [],
+        });
+        setUploadMethod('upload');
+        isInitializedRef.current = true;
+      } else {
+        console.log('Preserving form data - already initialized');
+      }
+      // Otherwise, preserve existing form data (user might have uploaded images)
+      // Don't reset if already initialized and sampleId hasn't changed
     }
-  }, [sampleId, selectedSample]);
+    
+    prevSampleIdRef.current = sampleId;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sampleId]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (!files || files.length === 0) return;
+    if (!files || files.length === 0) {
+      console.log('No files selected');
+      return;
+    }
 
-    const newImages: string[] = [];
-    let processedCount = 0;
-    const totalFiles = files.length;
+    console.log('Files selected:', files.length);
+    const fileArray = Array.from(files);
+    const validFiles: File[] = [];
+    const validationErrors: string[] = [];
 
-    Array.from(files).forEach((file) => {
+    // First pass: validate all files
+    fileArray.forEach((file) => {
+      console.log('Validating file:', file.name, 'Type:', file.type, 'Size:', file.size);
       // Validate file type
       if (!file.type.startsWith('image/')) {
-        setErrors({ ...errors, images: 'Please select only image files' });
+        validationErrors.push(`${file.name}: Please select only image files`);
         return;
       }
 
       // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        setErrors({ ...errors, images: 'Image size must be less than 5MB' });
+        validationErrors.push(`${file.name}: Image size must be less than 5MB`);
         return;
       }
 
+      validFiles.push(file);
+    });
+
+    console.log('Valid files:', validFiles.length, 'Errors:', validationErrors.length);
+
+    // If no valid files, show errors and return
+    if (validFiles.length === 0) {
+      console.log('No valid files, showing errors');
+      setErrors((prev) => ({ ...prev, images: validationErrors.join('; ') }));
+      e.target.value = '';
+      return;
+    }
+
+    // Process valid files
+    const newImages: (string | undefined)[] = new Array(validFiles.length);
+    let processedCount = 0;
+    const totalFiles = validFiles.length;
+
+    console.log('Starting to process', totalFiles, 'files');
+
+    validFiles.forEach((file, index) => {
       const reader = new FileReader();
       reader.onloadend = () => {
+        console.log(`File ${index + 1}/${totalFiles} loaded:`, file.name);
         const base64String = reader.result as string;
-        newImages.push(base64String);
+        if (base64String) {
+          newImages[index] = base64String;
+          console.log(`Base64 string length: ${base64String.length}`);
+        } else {
+          console.error(`No base64 string for file ${index + 1}`);
+        }
         processedCount++;
+        console.log(`Processed: ${processedCount}/${totalFiles}`);
 
+        // When all files are processed, update state
         if (processedCount === totalFiles) {
-          setFormData({ ...formData, images: [...formData.images, ...newImages] });
-          setErrors({ ...errors, images: '' });
+          console.log('All files processed, updating state');
+          // Filter out any undefined values and update state
+          const validNewImages = newImages.filter((img): img is string => img !== undefined);
+          console.log('Valid new images:', validNewImages.length);
+          
+          if (validNewImages.length > 0) {
+            setFormData((prev) => {
+              const updated = {
+                ...prev,
+                images: [...prev.images, ...validNewImages],
+              };
+              console.log('Updated formData.images count:', updated.images.length);
+              return updated;
+            });
+          } else {
+            console.error('No valid images to add!');
+          }
+          
+          // Clear errors if we have valid images, or show validation errors if any
+          if (validationErrors.length > 0) {
+            setErrors((prev) => ({
+              ...prev,
+              images: validationErrors.join('; '),
+            }));
+          } else {
+            setErrors((prev) => {
+              const newErrors = { ...prev };
+              delete newErrors.images;
+              return newErrors;
+            });
+          }
         }
       };
-      reader.onerror = () => {
-        setErrors({ ...errors, images: 'Failed to read image file' });
+      reader.onerror = (error) => {
+        console.error(`Error reading file ${index + 1}:`, error);
+        validationErrors.push(`${file.name}: Failed to read image file`);
+        processedCount++;
+        
+        if (processedCount === totalFiles) {
+          // Update with successfully processed images if any
+          const validNewImages = newImages.filter((img): img is string => img !== undefined);
+          if (validNewImages.length > 0) {
+            setFormData((prev) => ({
+              ...prev,
+              images: [...prev.images, ...validNewImages],
+            }));
+          }
+          setErrors((prev) => ({
+            ...prev,
+            images: validationErrors.join('; '),
+          }));
+        }
       };
       reader.readAsDataURL(file);
     });
@@ -159,8 +290,11 @@ export default function SampleForm({ sampleId, garmentType, onClose }: SampleFor
         });
       }
       onClose();
+      showToast(sampleId ? 'Sample updated successfully' : 'Sample created successfully', 'success');
     } catch (error) {
-      // Error is handled by store
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save sample';
+      showToast(errorMessage, 'error');
+      setErrors({ ...errors, submit: errorMessage });
     }
   };
 
@@ -345,38 +479,46 @@ export default function SampleForm({ sampleId, garmentType, onClose }: SampleFor
               )}
 
               {/* Image Previews */}
-              {formData.images.length > 0 && (
-                <div className="mt-3">
-                  <p className="text-sm text-gray-600 mb-2">Uploaded Images:</p>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                    {formData.images.map((imageUrl, index) => (
-                      <div key={index} className="relative group">
-                        <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
-                          <img
-                            src={imageUrl}
-                            alt={`Preview ${index + 1}`}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.src = 'https://via.placeholder.com/200x200?text=Invalid';
-                            }}
-                          />
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => removeImage(index)}
-                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
-                          title="Remove image"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </div>
-                    ))}
+              {(() => {
+                console.log('Rendering image previews. formData.images.length:', formData.images.length);
+                return formData.images.length > 0 ? (
+                  <div className="mt-3">
+                    <p className="text-sm text-gray-600 mb-2">Uploaded Images: ({formData.images.length})</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                      {formData.images.map((imageUrl, index) => {
+                        console.log(`Rendering image ${index + 1}:`, imageUrl?.substring(0, 50) + '...');
+                        return (
+                          <div key={index} className="relative group">
+                            <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                              <img
+                                src={imageUrl}
+                                alt={`Preview ${index + 1}`}
+                                className="w-full h-full object-cover"
+                                onLoad={() => console.log(`Image ${index + 1} loaded successfully`)}
+                                onError={(e) => {
+                                  console.error(`Image ${index + 1} failed to load`);
+                                  const target = e.target as HTMLImageElement;
+                                  target.src = 'https://via.placeholder.com/200x200?text=Invalid';
+                                }}
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeImage(index)}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                              title="Remove image"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              )}
+                ) : null;
+              })()}
             </div>
 
             {/* Form Actions */}
