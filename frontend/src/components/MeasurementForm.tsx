@@ -27,6 +27,8 @@ export default function MeasurementForm({ measurementId, customerId, onClose }: 
   const [selectedTemplate, setSelectedTemplate] = useState<MeasurementTemplate | null>(null);
   const [measurements, setMeasurements] = useState<Record<string, number>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [quickEntry, setQuickEntry] = useState('');
+  const [showQuickEntry, setShowQuickEntry] = useState(false);
 
   useEffect(() => {
     fetchCustomers();
@@ -58,6 +60,7 @@ export default function MeasurementForm({ measurementId, customerId, onClose }: 
       setSelectedCustomerId(selectedMeasurement.customer_id);
       setSelectedTemplateId(selectedMeasurement.template_id);
       setMeasurements(selectedMeasurement.measurements_json);
+      setQuickEntry(''); // Reset quick entry when loading existing measurement
       const template = templates.find((t) => t.id === selectedMeasurement.template_id);
       if (template) setSelectedTemplate(template);
     }
@@ -70,6 +73,65 @@ export default function MeasurementForm({ measurementId, customerId, onClose }: 
     setSelectedTemplate(template || null);
     // Reset measurements when template changes
     setMeasurements({});
+    setQuickEntry('');
+    setShowQuickEntry(false);
+  };
+
+  const handleQuickEntry = () => {
+    if (!selectedTemplate) return;
+    
+    const fieldsJson = selectedTemplate.fields_json;
+    const fieldOrder = (fieldsJson as any)._order as string[] | undefined;
+    
+    // Get ordered fields
+    let orderedFields: Array<[string, string]>;
+    if (fieldOrder && Array.isArray(fieldOrder)) {
+      orderedFields = fieldOrder
+        .filter(key => key !== '_order' && fieldsJson[key])
+        .map(key => [key, fieldsJson[key] as string]);
+      const orderedKeys = new Set(fieldOrder);
+      Object.entries(fieldsJson).forEach(([key, value]) => {
+        if (key !== '_order' && !orderedKeys.has(key)) {
+          orderedFields.push([key, value as string]);
+        }
+      });
+    } else {
+      orderedFields = Object.entries(fieldsJson)
+        .filter(([key]) => key !== '_order');
+    }
+
+    // Parse comma-separated values
+    const values = quickEntry
+      .split(',')
+      .map(v => v.trim())
+      .filter(v => v !== '')
+      .map(v => parseFloat(v))
+      .filter(v => !isNaN(v) && v >= 0);
+
+    if (values.length === 0) {
+      setErrors({ ...errors, quickEntry: 'Please enter valid numbers separated by commas' });
+      return;
+    }
+
+    if (values.length !== orderedFields.length) {
+      setErrors({ ...errors, quickEntry: `Expected ${orderedFields.length} values, got ${values.length}` });
+      return;
+    }
+
+    // Fill measurements with parsed values
+    const newMeasurements: Record<string, number> = {};
+    orderedFields.forEach(([field], index) => {
+      newMeasurements[field] = values[index];
+    });
+
+    setMeasurements(newMeasurements);
+    setQuickEntry('');
+    // Clear quick entry error
+    if (errors.quickEntry) {
+      const newErrors = { ...errors };
+      delete newErrors.quickEntry;
+      setErrors(newErrors);
+    }
   };
 
   const handleMeasurementChange = (field: string, value: string) => {
@@ -229,9 +291,67 @@ export default function MeasurementForm({ measurementId, customerId, onClose }: 
               
               return (
                 <div className="border-t pt-4">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                    Measurements ({selectedTemplate.display_name})
-                  </h3>
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Measurements ({selectedTemplate.display_name})
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => setShowQuickEntry(!showQuickEntry)}
+                      className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      {showQuickEntry ? 'Hide Quick Entry' : 'Quick Entry'}
+                    </button>
+                  </div>
+                  
+                  {/* Quick Entry Section */}
+                  {showQuickEntry && (
+                    <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                      <label htmlFor="quickEntry" className="block text-sm font-medium text-gray-700 mb-2">
+                        Quick Entry (Comma-separated values)
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          id="quickEntry"
+                          value={quickEntry}
+                          onChange={(e) => {
+                            setQuickEntry(e.target.value);
+                            if (errors.quickEntry) {
+                              const newErrors = { ...errors };
+                              delete newErrors.quickEntry;
+                              setErrors(newErrors);
+                            }
+                          }}
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleQuickEntry();
+                            }
+                          }}
+                          placeholder={`Enter values: ${orderedFields.map(([, label]) => label).join(', ')}`}
+                          className={`flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                            errors.quickEntry ? 'border-red-500' : 'border-gray-300'
+                          }`}
+                        />
+                        <button
+                          type="button"
+                          onClick={handleQuickEntry}
+                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                          Fill
+                        </button>
+                      </div>
+                      {errors.quickEntry && (
+                        <p className="mt-1 text-sm text-red-600">{errors.quickEntry}</p>
+                      )}
+                      <p className="mt-2 text-xs text-gray-500">
+                        Enter {orderedFields.length} values separated by commas (e.g., 21, 23, 25)
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Individual Fields */}
                   <div className="grid grid-cols-2 gap-4">
                     {orderedFields.map(([field, displayName]) => (
                       <div key={field}>
